@@ -83,7 +83,12 @@ public class CrabStunPlugin extends Plugin {
     private final List<CrabStun> stunEvents = new ArrayList<>();
 
     private int[] crabIDs = {7576, 7577, 7578, 7579};
-    private int stunDuration = 20;
+    private int stunDuration = 19;
+
+
+    final int CRAB_STUN_GRAPHIC = 245;
+    final int Z_OFFSET_COX_UPPER_FLOOR = 3;
+    final int RED_CRAB_NPC_ID = 7577;
 
     @Override
     protected void startUp() {
@@ -113,28 +118,25 @@ public class CrabStunPlugin extends Plugin {
         }
     }
 
+    /*
     @Subscribe
     public void onNpcChanged(NpcChanged event) {
-        final int Z_OFFSET_COX_UPPER_FLOOR = 3;
-        final int CRAB_STUN_GRAPHIC = 245;
-        final int RED_CRAB_NPC_ID = 7577;
-
-        //TODO: 14 ticks graphic duration?
-
         NPC npc = event.getNpc();
         int graphic = event.getNpc().getGraphic();
 
-        System.out.println("NPC changed! NPC: " + npc.getName() + " Graphic: " + graphic);
-
-        /*
-        if (npc.getId() == RED_CRAB_NPC_ID) {
-            if (graphic == CRAB_STUN_GRAPHIC) {
+        if (npc.getId() == RED_CRAB_NPC_ID && graphic == CRAB_STUN_GRAPHIC) {
                 System.out.println("Crab stunned!");
                 WorldPoint worldPoint = npc.getWorldLocation();
                 CrabStun stunEvent = new CrabStun(npc, worldPoint, Instant.now(), (int) Duration.ofSeconds(stunDuration).toMillis(),
                         Z_OFFSET_COX_UPPER_FLOOR);
+
+                for (CrabStun stun : stunEvents) {
+                    if (stun.getCrab().equals(npc)) {
+                        System.out.println("Crab was restunned?");
+                        stun.setStartTime(Instant.now());
+                    }
+                }
                 stunEvents.add(stunEvent);
-            }
-        } */
-    }
+        }
+    } */
 }

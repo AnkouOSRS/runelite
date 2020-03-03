@@ -36,6 +36,7 @@ import net.runelite.client.ui.overlay.components.ProgressPieComponent;
 
 import javax.inject.Inject;
 import java.awt.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,8 @@ class CrabStunOverlay extends Overlay
 {
 	private final Client client;
 	private final CrabStunPlugin plugin;
+
+	private final Duration STUN_TIME_RANDOMNESS_INTERVAL = Duration.ofSeconds(5);
 
 	@Inject
 	private CrabStunOverlay(Client client, CrabStunPlugin plugin)
@@ -70,7 +73,12 @@ class CrabStunOverlay extends Overlay
 			Color pieBorderColor = Color.ORANGE;
 			CrabStun stun = it.next();
 
-			float percent = (now.toEpochMilli() - stun.getStartTime().toEpochMilli()) / (float) stun.getStunDuration();
+			float percent = (now.toEpochMilli() - stun.getStartTime().toEpochMilli()) / ((float) stun.getStunDuration()
+					+ STUN_TIME_RANDOMNESS_INTERVAL.toMillis());
+			if (percent > .8) {
+				pieFillColor = Color.RED;
+		}
+
 			WorldPoint worldPoint = stun.getWorldPoint();
 			LocalPoint loc = LocalPoint.fromWorld(client, worldPoint);
 			if (loc == null || percent > 1.0f)

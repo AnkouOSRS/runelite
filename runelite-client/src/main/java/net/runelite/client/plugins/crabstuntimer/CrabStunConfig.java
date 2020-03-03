@@ -49,6 +49,6 @@ public interface CrabStunConfig extends Config
 	)
 	default int stunDuration()
 	{
-		return 20;
+		return 19;
 	}
 }
