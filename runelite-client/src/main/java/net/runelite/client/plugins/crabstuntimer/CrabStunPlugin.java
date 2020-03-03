@@ -48,72 +48,93 @@ import java.util.List;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Crab Stun Timers",
-	description = "Show crab stun timers",
-	tags = {"overlay", "raid", "pvm", "timers"},
-	enabledByDefault = false
+        name = "Crab Stun Timers",
+        description = "Show crab stun timers",
+        tags = {"overlay", "raid", "pvm", "timers"},
+        enabledByDefault = false
 )
-public class CrabStunPlugin extends Plugin
-{
-	@Inject
-	private Client client;
+public class CrabStunPlugin extends Plugin {
+    @Inject
+    private Client client;
 
-	@Inject
-	private CrabStunConfig config;
+    @Inject
+    private CrabStunConfig config;
 
-	@Provides
-	CrabStunConfig getConfig(ConfigManager configManager) {
-		return configManager.getConfig(CrabStunConfig.class);
-	}
+    @Provides
+    CrabStunConfig getConfig(ConfigManager configManager) {
+        return configManager.getConfig(CrabStunConfig.class);
+    }
 
-	@Subscribe
-	public void onConfigChanged(ConfigChanged event) {
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event) {
+        stunDuration = config.stunDuration();
+    }
 
-	}
+    @Inject
+    private OverlayManager overlayManager;
 
-	@Inject
-	private OverlayManager overlayManager;
+    @Inject
+    private CrabStunOverlay overlay;
 
-	@Inject
-	private CrabStunOverlay overlay;
+    @Inject
+    private NPCManager npcManager;
 
-	@Inject
-	private NPCManager npcManager;
+    @Getter(AccessLevel.PACKAGE)
+    private final List<CrabStun> stunEvents = new ArrayList<>();
 
-	@Getter(AccessLevel.PACKAGE)
-	private final List<CrabStun> stunEvents = new ArrayList<>();
+    private int[] crabIDs = {7576, 7577, 7578, 7579};
+    private int stunDuration = 20;
 
-	private int[] crabIDs = {7576, 7577, 7578, 7579};
+    @Override
+    protected void startUp() {
+        overlayManager.add(overlay);
+    }
 
-	@Override
-	protected void startUp()
-	{
-		overlayManager.add(overlay);
-	}
+    @Override
+    protected void shutDown() throws Exception {
+        overlayManager.remove(overlay);
+    }
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-		overlayManager.remove(overlay);
-	}
+    @Subscribe
+    public void onGraphicChanged(GraphicChanged event) {
+        final int Z_OFFSET_COX_UPPER_FLOOR = 3;
+        final int CRAB_STUN_GRAPHIC = 245;
 
-	@Subscribe
-	public void onNpcChanged(NpcChanged event) {
-		final int Z_OFFSET_COX_UPPER_FLOOR = 3;
-		final Duration STUN_TIME_DUO = Duration.ofSeconds(20);
+        Actor actor = event.getActor();
+        int graphic = actor.getGraphic();
 
-		NPC npc = event.getNpc();
-		System.out.println("NPC changed! " + npc.getName());
+        System.out.println("Graphic changed: Actor: " + actor.getName() + " Graphic: " + graphic);
 
-		int graphic = event.getNpc().getGraphic();
-		if (ArrayUtils.contains(crabIDs, npc.getId())) {
-			if (graphic == 245) {
-				System.out.println("Crab stunned!");
-				WorldPoint worldPoint = npc.getWorldLocation();
-				CrabStun stunEvent = new CrabStun(npc, worldPoint, Instant.now(), (int) STUN_TIME_DUO.toMillis(),
-						Z_OFFSET_COX_UPPER_FLOOR);
-				stunEvents.add(stunEvent);
-			}
-		}
-	}
+        if (graphic == CRAB_STUN_GRAPHIC) {
+            WorldPoint worldPoint = actor.getWorldLocation();
+            CrabStun stunEvent = new CrabStun(actor, worldPoint, Instant.now(), (int) Duration.ofSeconds(stunDuration).toMillis(),
+                    Z_OFFSET_COX_UPPER_FLOOR);
+            stunEvents.add(stunEvent);
+        }
+    }
+
+    @Subscribe
+    public void onNpcChanged(NpcChanged event) {
+        final int Z_OFFSET_COX_UPPER_FLOOR = 3;
+        final int CRAB_STUN_GRAPHIC = 245;
+        final int RED_CRAB_NPC_ID = 7577;
+
+        //TODO: 14 ticks graphic duration?
+
+        NPC npc = event.getNpc();
+        int graphic = event.getNpc().getGraphic();
+
+        System.out.println("NPC changed! NPC: " + npc.getName() + " Graphic: " + graphic);
+
+        /*
+        if (npc.getId() == RED_CRAB_NPC_ID) {
+            if (graphic == CRAB_STUN_GRAPHIC) {
+                System.out.println("Crab stunned!");
+                WorldPoint worldPoint = npc.getWorldLocation();
+                CrabStun stunEvent = new CrabStun(npc, worldPoint, Instant.now(), (int) Duration.ofSeconds(stunDuration).toMillis(),
+                        Z_OFFSET_COX_UPPER_FLOOR);
+                stunEvents.add(stunEvent);
+            }
+        } */
+    }
 }

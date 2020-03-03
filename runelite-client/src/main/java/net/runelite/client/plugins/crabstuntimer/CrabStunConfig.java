@@ -41,4 +41,14 @@ public interface CrabStunConfig extends Config
 	{
 		return true;
 	}
+	@ConfigItem(
+			keyName = "stunDuration",
+			name = "Crab stun duration",
+			description = "Configures the time shown by the timer in seconds",
+			position = 2
+	)
+	default int stunDuration()
+	{
+		return 20;
+	}
 }

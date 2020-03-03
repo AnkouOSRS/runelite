@@ -38,7 +38,7 @@ import java.time.Instant;
 @Setter
 class CrabStun
 {
-	private final NPC crab;
+	private final Actor crab;
 	private final WorldPoint worldPoint;
 	private Instant startTime;
 	private final int stunDuration;
