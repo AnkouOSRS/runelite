@@ -28,7 +28,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.Actor;
-import net.runelite.api.NPC;
 import net.runelite.api.coords.WorldPoint;
 
 import java.time.Instant;
@@ -36,11 +35,10 @@ import java.time.Instant;
 @AllArgsConstructor
 @Getter
 @Setter
-class CrabStun
-{
-	private final Actor crab;
-	private final WorldPoint worldPoint;
-	private Instant startTime;
-	private final int stunDuration;
-	private final int zOffset;
+class CrabStun {
+    private final Actor crab;
+    private final WorldPoint worldPoint;
+    private Instant startTime;
+    private final int stunDurationTicks;
+    private final int zOffset;
 }

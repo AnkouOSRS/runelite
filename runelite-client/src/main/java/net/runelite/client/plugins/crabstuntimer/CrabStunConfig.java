@@ -28,27 +28,91 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
+import java.awt.*;
+
+import static net.runelite.client.plugins.crabstuntimer.TimerTextStyle.TICKS;
+
 @ConfigGroup("crabstun")
-public interface CrabStunConfig extends Config
-{
-	@ConfigItem(
-		keyName = "showTimer",
-		name = "Show crab stun timer",
-		description = "Configures whether or not the timer is displayed",
-		position = 1
-	)
-	default boolean showTimer()
-	{
-		return true;
-	}
-	@ConfigItem(
-			keyName = "stunDuration",
-			name = "Crab stun duration",
-			description = "Configures the time shown by the timer in seconds",
-			position = 2
-	)
-	default int stunDuration()
-	{
-		return 19;
-	}
+public interface CrabStunConfig extends Config {
+    @ConfigItem(
+            keyName = "showTimer",
+            name = "Show crab stun timer",
+            description = "Configures whether or not the timer is displayed",
+            position = 1
+    )
+    default boolean showTimer() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "showText",
+            name = "Show crab stun timer text",
+            description = "Configures whether or not the text is displayed",
+            position = 2
+    )
+    default boolean showText() {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "textType",
+            name = "Choose text type",
+            description = "Configures whether ticks or seconds are displayed",
+            position = 3
+    )
+    default TimerTextStyle textType() {
+        return TICKS;
+    }
+
+    @ConfigItem(
+            keyName = "normalTimerColor",
+            name = "Timer color",
+            description = "Configures the color of the timer that is displayed",
+            position = 4
+    )
+    default Color normalTimerColor() {
+        return Color.YELLOW;
+    }
+
+    @ConfigItem(
+            keyName = "randomTimerColor",
+            name = "Random interval color",
+            description = "Configures the color of the timer during the random interval",
+            position = 5
+    )
+    default Color randomTimerColor() {
+        return Color.CYAN;
+    }
+
+    @ConfigItem(
+            keyName = "timerWarningColor",
+            name = "Timer warning color",
+            description = "Configures the color of the timer when the crab is almost unstunned",
+            position = 6
+    )
+    default Color timerWarningColor() {
+        return Color.RED;
+    }
+
+    @ConfigItem(
+            keyName = "timerBorderColor",
+            name = "Timer border color",
+            description = "Configures the color of the timer that is displayed",
+            position = 7
+    )
+    default Color timerBorderColor() {
+        return Color.ORANGE;
+    }
+
+    @ConfigItem(
+            keyName = "randomBorderColor",
+            name = "Random border color",
+            description = "Configures the color of the timer that is displayed",
+            position = 8
+    )
+    default Color randomBorderColor() {
+        return Color.LIGHT_GRAY;
+    }
+
+
 }

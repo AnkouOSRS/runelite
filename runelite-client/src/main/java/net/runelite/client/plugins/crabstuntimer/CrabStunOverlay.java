@@ -24,6 +24,8 @@
  */
 package net.runelite.client.plugins.crabstuntimer;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
@@ -33,74 +35,105 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.ProgressPieComponent;
+import net.runelite.client.ui.overlay.components.TextComponent;
 
 import javax.inject.Inject;
 import java.awt.*;
-import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class CrabStunOverlay extends Overlay
-{
-	private final Client client;
-	private final CrabStunPlugin plugin;
+class CrabStunOverlay extends Overlay {
+    private final Client client;
+    private final CrabStunPlugin plugin;
 
-	private final Duration STUN_TIME_RANDOMNESS_INTERVAL = Duration.ofSeconds(5);
+    @Getter(AccessLevel.PACKAGE)
+    private List<CrabStun> randomIntervalTimers = new ArrayList<>();
 
-	@Inject
-	private CrabStunOverlay(Client client, CrabStunPlugin plugin)
-	{
-		setPosition(OverlayPosition.DYNAMIC);
-		setLayer(OverlayLayer.ABOVE_SCENE);
-		this.plugin = plugin;
-		this.client = client;
-	}
+    @Inject
+    private CrabStunConfig config;
 
-	@Override
-	public Dimension render(Graphics2D graphics)
-	{
-		List<CrabStun> locations = plugin.getStunEvents();
-		if (locations.isEmpty())
-		{
-			return null;
-		}
+    @Inject
+    private CrabStunOverlay(Client client, CrabStunPlugin plugin) {
+        setPosition(OverlayPosition.DYNAMIC);
+        setLayer(OverlayLayer.ABOVE_SCENE);
+        this.plugin = plugin;
+        this.client = client;
+    }
 
-		Instant now = Instant.now();
-		for (Iterator<CrabStun> it = locations.iterator(); it.hasNext();)
-		{
-			Color pieFillColor = Color.YELLOW;
-			Color pieBorderColor = Color.ORANGE;
-			CrabStun stun = it.next();
+    @Override
+    public Dimension render(Graphics2D graphics) {
+        List<CrabStun> stunEvents = plugin.getStunEvents();
+        renderGraphicsFromCrabStunList(stunEvents, graphics, false);
+        renderGraphicsFromCrabStunList(randomIntervalTimers, graphics, true);
+        return null;
+    }
 
-			float percent = (now.toEpochMilli() - stun.getStartTime().toEpochMilli()) / ((float) stun.getStunDuration()
-					+ STUN_TIME_RANDOMNESS_INTERVAL.toMillis());
-			if (percent > .8) {
-				pieFillColor = Color.RED;
-		}
+    private void renderGraphicsFromCrabStunList(List<CrabStun> stunEvents, Graphics2D graphics, boolean inRandomInterval) {
+        if (stunEvents.isEmpty()) {
+            return;
+        }
 
-			WorldPoint worldPoint = stun.getWorldPoint();
-			LocalPoint loc = LocalPoint.fromWorld(client, worldPoint);
-			if (loc == null || percent > 1.0f)
-			{
-				it.remove();
-				continue;
-			}
+        Instant now = Instant.now();
+        for (Iterator<CrabStun> it = stunEvents.iterator(); it.hasNext(); ) {
+            Color pieFillColor = (inRandomInterval ? config.randomTimerColor() : config.normalTimerColor());
+            Color pieBorderColor = (inRandomInterval ? config.randomBorderColor() : config.timerBorderColor());
 
-			Point point = Perspective.localToCanvas(client, loc, client.getPlane(), stun.getZOffset());
-			if (point == null)
-			{
-				it.remove();
-				continue;
-			}
+            CrabStun stun = it.next();
+            float stunDurationMillis = (float) (stun.getStunDurationTicks() * 0.6 * 1000.0);
+            float percent = (now.toEpochMilli() - stun.getStartTime().toEpochMilli()) / stunDurationMillis;
+            float millisLeft = (stunDurationMillis - (now.toEpochMilli() - stun.getStartTime().toEpochMilli()));
+            double secondsLeft = Math.round(millisLeft / 100.0) / 10.0;
+            WorldPoint worldPoint = stun.getWorldPoint();
+            LocalPoint loc = LocalPoint.fromWorld(client, worldPoint);
 
-			ProgressPieComponent ppc = new ProgressPieComponent();
-			ppc.setBorderColor(pieBorderColor);
-			ppc.setFill(pieFillColor);
-			ppc.setPosition(point);
-			ppc.setProgress(percent);
-			ppc.render(graphics);
-		}
-		return null;
-	}
+            if (percent >= .9) {
+                pieFillColor = config.timerWarningColor();
+            }
+
+            if (loc == null) {
+                it.remove();
+                continue;
+            }
+
+            if (percent > 1.0f) {
+                if (!inRandomInterval) {
+                    randomIntervalTimers.add(new CrabStun(stun.getCrab(), stun.getWorldPoint(), Instant.now(), 10, 0));
+                }
+                it.remove();
+                continue;
+            }
+
+            Point point = Perspective.localToCanvas(client, loc, client.getPlane(), stun.getZOffset());
+            if (point == null) {
+                it.remove();
+                continue;
+            }
+
+            if (config.showTimer()) {
+                ProgressPieComponent ppc = new ProgressPieComponent();
+                ppc.setBorderColor(pieBorderColor);
+                ppc.setFill(pieFillColor);
+                ppc.setPosition(point);
+                ppc.setProgress(percent);
+                ppc.render(graphics);
+            }
+
+            if (config.showText()) {
+                TextComponent tc = new TextComponent();
+                switch (config.textType()) {
+                    case SECONDS:
+                        tc.setText(secondsLeft + (inRandomInterval ? "?" : ""));
+                        break;
+                    case TICKS:
+                        tc.setText(Math.round((millisLeft / 1000.0) / .6) + (inRandomInterval ? "?" : ""));
+                        break;
+                }
+                tc.setColor(pieFillColor);
+                tc.setPosition(new java.awt.Point(point.getX() - 5, point.getY() - 17));
+                tc.render(graphics);
+            }
+        }
+    }
 }

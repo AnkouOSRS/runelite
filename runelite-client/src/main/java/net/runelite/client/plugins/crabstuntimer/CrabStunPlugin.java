@@ -28,22 +28,23 @@ import com.google.inject.Provides;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.*;
+import net.runelite.api.Actor;
+import net.runelite.api.Client;
+import net.runelite.api.Varbits;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.api.events.*;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.GraphicChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.events.ConfigChanged;
-import net.runelite.client.game.NPCManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import org.apache.commons.lang3.ArrayUtils;
 
 import javax.inject.Inject;
-import java.time.Duration;
+import java.awt.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Slf4j
@@ -57,17 +58,9 @@ public class CrabStunPlugin extends Plugin {
     @Inject
     private Client client;
 
-    @Inject
-    private CrabStunConfig config;
-
     @Provides
     CrabStunConfig getConfig(ConfigManager configManager) {
         return configManager.getConfig(CrabStunConfig.class);
-    }
-
-    @Subscribe
-    public void onConfigChanged(ConfigChanged event) {
-        stunDuration = config.stunDuration();
     }
 
     @Inject
@@ -76,19 +69,8 @@ public class CrabStunPlugin extends Plugin {
     @Inject
     private CrabStunOverlay overlay;
 
-    @Inject
-    private NPCManager npcManager;
-
     @Getter(AccessLevel.PACKAGE)
     private final List<CrabStun> stunEvents = new ArrayList<>();
-
-    private int[] crabIDs = {7576, 7577, 7578, 7579};
-    private int stunDuration = 19;
-
-
-    final int CRAB_STUN_GRAPHIC = 245;
-    final int Z_OFFSET_COX_UPPER_FLOOR = 3;
-    final int RED_CRAB_NPC_ID = 7577;
 
     @Override
     protected void startUp() {
@@ -102,41 +84,53 @@ public class CrabStunPlugin extends Plugin {
 
     @Subscribe
     public void onGraphicChanged(GraphicChanged event) {
-        final int Z_OFFSET_COX_UPPER_FLOOR = 3;
+        if (client.getVar(Varbits.IN_RAID) != 1) {
+            return;
+        }
         final int CRAB_STUN_GRAPHIC = 245;
-
         Actor actor = event.getActor();
-        int graphic = actor.getGraphic();
-
-        System.out.println("Graphic changed: Actor: " + actor.getName() + " Graphic: " + graphic);
-
-        if (graphic == CRAB_STUN_GRAPHIC) {
+        if (actor.getGraphic() == CRAB_STUN_GRAPHIC) {
             WorldPoint worldPoint = actor.getWorldLocation();
-            CrabStun stunEvent = new CrabStun(actor, worldPoint, Instant.now(), (int) Duration.ofSeconds(stunDuration).toMillis(),
-                    Z_OFFSET_COX_UPPER_FLOOR);
+            CrabStun stunEvent = new CrabStun(actor, worldPoint, Instant.now(), getStunDurationTicks(), 0);
+
+            for (CrabStun stun : stunEvents) {
+                if (stun.getCrab().equals(actor)) {
+                    stun.setStartTime(Instant.now());
+                }
+            }
             stunEvents.add(stunEvent);
         }
     }
 
-    /*
     @Subscribe
-    public void onNpcChanged(NpcChanged event) {
-        NPC npc = event.getNpc();
-        int graphic = event.getNpc().getGraphic();
+    public void onGameTick(GameTick event) {
+        for (Iterator<CrabStun> it = overlay.getRandomIntervalTimers().iterator(); it.hasNext(); ) {
+            try {
+                CrabStun stun = it.next();
+                Point crabStunPoint = new Point(stun.getWorldPoint().getX(), stun.getWorldPoint().getY());
+                Point crabCurrentPoint = new Point(stun.getCrab().getWorldLocation().getX(), stun.getCrab().getWorldLocation().getY());
 
-        if (npc.getId() == RED_CRAB_NPC_ID && graphic == CRAB_STUN_GRAPHIC) {
-                System.out.println("Crab stunned!");
-                WorldPoint worldPoint = npc.getWorldLocation();
-                CrabStun stunEvent = new CrabStun(npc, worldPoint, Instant.now(), (int) Duration.ofSeconds(stunDuration).toMillis(),
-                        Z_OFFSET_COX_UPPER_FLOOR);
-
-                for (CrabStun stun : stunEvents) {
-                    if (stun.getCrab().equals(npc)) {
-                        System.out.println("Crab was restunned?");
-                        stun.setStartTime(Instant.now());
-                    }
+                if (crabStunPoint.distance(crabCurrentPoint) > 0) {
+                    it.remove();
                 }
-                stunEvents.add(stunEvent);
+            } catch (Exception e) {
+                return;
+            }
         }
-    } */
+    }
+
+    private int getStunDurationTicks() {
+        switch (client.getVar(Varbits.RAID_PARTY_SIZE)) {
+            case 1:
+                return TeamSize.ONE.getStunDuration();
+            case 2:
+            case 3:
+                return TeamSize.TWO_TO_THREE.getStunDuration();
+            case 4:
+            case 5:
+                return TeamSize.FOUR_TO_FIVE.getStunDuration();
+            default:
+                return TeamSize.SIX_PLUS.getStunDuration();
+        }
+    }
 }
