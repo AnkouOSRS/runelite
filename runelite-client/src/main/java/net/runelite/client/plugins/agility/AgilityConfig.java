@@ -203,7 +203,7 @@ public interface AgilityConfig extends Config
 		keyName = "highlightStick",
 		name = "Highlight Stick",
 		description = "Highlight the retrievable stick in the Werewolf Agility Course",
-		position = 13
+		position = 15
 	)
 	default boolean highlightStick()
 	{
@@ -214,10 +214,32 @@ public interface AgilityConfig extends Config
 		keyName = "stickHighlightColor",
 		name = "Stick Highlight Color",
 		description = "Color of highlighted stick",
-		position = 14
+		position = 16
 	)
 	default Color stickHighlightColor()
 	{
 		return Color.RED;
+	}
+
+	@ConfigItem(
+		keyName = "highlightSepulchreNpcs",
+		name = "Highlight Sepulchre Projectiles",
+		description = "Highlights arrows and swords in the Sepulchre",
+		position = 15
+	)
+	default boolean highlightSepulchreNpcs()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "sepulchreHighlightColor",
+		name = "Sepulchre Highlight",
+		description = "Overlay color for arrows and swords",
+		position = 16
+	)
+	default Color sepulchreHighlightColor()
+	{
+		return Color.GREEN;
 	}
 }

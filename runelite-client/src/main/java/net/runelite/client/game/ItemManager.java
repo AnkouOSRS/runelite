@@ -145,6 +145,12 @@ public class ItemManager
 		put(GRACEFUL_LEGS_21072, GRACEFUL_LEGS_21070).
 		put(GRACEFUL_GLOVES_21075, GRACEFUL_GLOVES_21073).
 		put(GRACEFUL_BOOTS_21078, GRACEFUL_BOOTS_21076).
+		put(GRACEFUL_HOOD_24745, GRACEFUL_HOOD_24743).
+		put(GRACEFUL_CAPE_24748, GRACEFUL_CAPE_24746).
+		put(GRACEFUL_TOP_24751, GRACEFUL_TOP_24749).
+		put(GRACEFUL_LEGS_24754, GRACEFUL_LEGS_24752).
+		put(GRACEFUL_GLOVES_24757, GRACEFUL_GLOVES_24755).
+		put(GRACEFUL_BOOTS_24760, GRACEFUL_BOOTS_24758).
 
 		put(MAX_CAPE_13342, MAX_CAPE).
 
@@ -290,20 +296,25 @@ public class ItemManager
 	 */
 	public int getItemPrice(int itemID, boolean ignoreUntradeableMap)
 	{
-		final int realId = canonicalize(itemID);
-
-		if (realId == ItemID.COINS_995)
+		if (itemID == ItemID.COINS_995)
 		{
 			return 1;
 		}
-		if (realId == ItemID.PLATINUM_TOKEN)
+		if (itemID == ItemID.PLATINUM_TOKEN)
 		{
 			return 1000;
 		}
 
+		ItemComposition itemComposition = getItemComposition(itemID);
+		if (itemComposition.getNote() != -1)
+		{
+			itemID = itemComposition.getLinkedNoteId();
+		}
+		itemID = WORN_ITEMS.getOrDefault(itemID, itemID);
+
 		if (!ignoreUntradeableMap)
 		{
-			UntradeableItemMapping p = UntradeableItemMapping.map(ItemVariationMapping.map(realId));
+			UntradeableItemMapping p = UntradeableItemMapping.map(ItemVariationMapping.map(itemID));
 			if (p != null)
 			{
 				return getItemPrice(p.getPriceID()) * p.getQuantity();
@@ -311,7 +322,7 @@ public class ItemManager
 		}
 
 		int price = 0;
-		for (int mappedID : ItemMapping.map(realId))
+		for (int mappedID : ItemMapping.map(itemID))
 		{
 			ItemPrice ip = itemPrices.get(mappedID);
 			if (ip != null)
