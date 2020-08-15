@@ -34,222 +34,350 @@ import java.awt.*;
 @ConfigGroup("coxlightcolors")
 public interface CoxLightColorsConfig extends Config
 {
-	@ConfigSection(
-			name = "Light colors",
-			description = "Colors of the lights above the loot chest for different scenarios",
-			position = 0
-	)
-	String colorsSection = "colors";
+    @ConfigSection(
+            name = "Light colors",
+            description = "Colors of the lights above the loot chest for different scenarios",
+            position = 0
+    )
+    String colorsSection = "colors";
 
-	@ConfigSection(
-			name = "Specific Uniques",
-			description = "Uniques that, when obtained, will use the 'Specific Unique' color for the light",
-			position = 1
-	)
-	String uniquesSection = "uniques";
+    @ConfigSection(
+            name = "Item groups",
+            description = "Uniques that, when obtained, will use the 'Specific Unique' color for the light",
+            position = 1
+    )
+    String uniquesSection = "uniques";
 
-	@ConfigItem(
-			keyName = "noUnique",
-			name = "No Unique",
-			description = "Color of light when no unique item is obtained",
-			position = 0,
-			section = colorsSection
-	)
-	default Color noUnique()
-	{
-		return Color.WHITE;
-	}
+    @ConfigSection(
+            name = "Toggles",
+            description = "Toggle different recolors on or off",
+            position = 2
+    )
+    String togglesSection = "toggles";
 
-	@ConfigItem(
-			keyName = "unique",
-			name = "Unique",
-			description = "Color of light when a unique item is obtained (besides twisted kit or dust)",
-			position = 1,
-			section = colorsSection
-	)
-	default Color unique()
-	{
-		return Color.decode("#F155F5");
-	}
+    @ConfigItem(
+            keyName = "standardLoot",
+            name = "Standard loot",
+            description = "Color of light when no unique item is obtained",
+            position = 0,
+            section = colorsSection
+    )
+    default Color standardLoot()
+    {
+        return Color.WHITE;
+    }
 
-	@ConfigItem(
-			keyName = "dust",
-			name = "Metamorphic Dust",
-			description = "Color of light when metamorphic dust is obtained",
-			position = 2,
-			section = colorsSection
-	)
-	default Color dust()
-	{
-		return Color.CYAN;
-	}
+    @ConfigItem(
+            keyName = "enableStandardLoot",
+            name = "Recolor no uniques",
+            description = "Enable recoloring the light of the chest when no unique is obtained",
+            position = 1,
+            section = togglesSection
+    )
+    default boolean enableStandardLoot()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "twistedKit",
-			name = "Twisted Kit",
-			description = "Color of light when a twisted kit is obtained",
-			position = 3,
-			section = colorsSection
-	)
-	default Color twistedKit()
-	{
-		return Color.GREEN;
-	}
+    @ConfigItem(
+            keyName = "unique",
+            name = "Unique",
+            description = "Color of light when a unique item is obtained (besides twisted kit or dust)",
+            position = 2,
+            section = colorsSection
+    )
+    default Color unique()
+    {
+        return Color.decode("#F155F5");
+    }
 
-	@ConfigItem(
-			keyName = "olmEntrance",
-			name = "Olm Entrance",
-			description = "Color of the barrier used to enter the Olm room",
-			position = 4,
-			section = colorsSection
-	)
-	default Color olmEntrance()
-	{
-		return Color.decode("#8CFF0B");
-	}
+    @ConfigItem(
+            keyName = "enableUnique",
+            name = "Recolor uniques",
+            description = "Enable recoloring the light of the chest when a unique is obtained",
+            position = 3,
+            section = togglesSection
+    )
+    default boolean enableUnique()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "specificUniqueColor",
-			name = "Specific Unique",
-			description = "Color of the light when an item specified below is obtained",
-			position = 5,
-			section = colorsSection
-	)
-	default Color specificUniqueColor()
-	{
-		return Color.RED;
-	}
+    @ConfigItem(
+            keyName = "dust",
+            name = "Metamorphic Dust",
+            description = "Color of light when metamorphic dust is obtained",
+            position = 4,
+            section = colorsSection
+    )
+    default Color dust()
+    {
+        return Color.CYAN;
+    }
 
-	@ConfigItem(
-			keyName = "specifyTwistedBow",
-			name = "Twisted bow",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyTwistedBow()
-	{
-		return true;
-	}
+    @ConfigItem(
+            keyName = "enableDust",
+            name = "Recolor dust",
+            description = "Enable recoloring the light of the chest when metamorphic dust is obtained",
+            position = 5,
+            section = togglesSection
+    )
+    default boolean enableDust()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "specifyKodaiInsignia",
-			name = "Kodai insignia",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyKodaiInsignia()
-	{
-		return true;
-	}
+    @ConfigItem(
+            keyName = "twistedKit",
+            name = "Twisted Kit",
+            description = "Color of light when a twisted kit is obtained",
+            position = 6,
+            section = colorsSection
+    )
+    default Color twistedKit()
+    {
+        return Color.GREEN;
+    }
 
-	@ConfigItem(
-			keyName = "specifyElderMaul",
-			name = "Elder maul",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyElderMaul()
-	{
-		return true;
-	}
+    @ConfigItem(
+            keyName = "enableKit",
+            name = "Recolor Twisted kit",
+            description = "Enable recoloring the light of the chest when a twisted kit is obtained",
+            position = 7,
+            section = togglesSection
+    )
+    default boolean enableKit()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "specifyDragonClaws",
-			name = "Dragon Claws",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyDragonClaws()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "olmEntrance",
+            name = "Olm Entrance",
+            description = "Color of the barrier used to enter the Olm room",
+            position = 8,
+            section = colorsSection
+    )
+    default Color olmEntrance()
+    {
+        return Color.decode("#8CFF0B");
+    }
 
-	@ConfigItem(
-			keyName = "specifyAncestralHat",
-			name = "Ancestral hat",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyAncestralHat()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "enableEntrance",
+            name = "Recolor entance",
+            description = "Enable recoloring the entrance barrier to Olm",
+            position = 9,
+            section = togglesSection
+    )
+    default boolean enableEntrance()
+    {
+        return true;
+    }
 
+    @ConfigItem(
+            keyName = "groupOneColor",
+            name = "Group 1",
+            description = "Color of the light when an item from group 1 is obtained",
+            position = 10,
+            section = colorsSection
+    )
+    default Color groupOneColor()
+    {
+        return Color.RED;
+    }
 
-	@ConfigItem(
-			keyName = "specifyAncestralRobeTop",
-			name = "Ancestral robe top",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyAncestralRobeTop()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "enableGroupOne",
+            name = "Recolor group 1",
+            description = "Enable recoloring the light of the chest when a unique from group 1 is obtained",
+            position = 11,
+            section = togglesSection
+    )
+    default boolean enableGroupOne()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "specifyAncestralRobeBottom",
-			name = "Ancestral robe bottom",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyAncestralRobeBottom()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "groupTwoColor",
+            name = "Group 2",
+            description = "Color of the light when an item from group 2 is obtained",
+            position = 12,
+            section = colorsSection
+    )
+    default Color groupTwoColor()
+    {
+        return Color.BLUE;
+    }
 
-	@ConfigItem(
-			keyName = "specifyDinhsBulwark",
-			name = "Dinh's bulwark",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyDinhsBulwark()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "enableGroupTwo",
+            name = "Recolor group 2",
+            description = "Enable recoloring the light of the chest when a unique from group 2 is obtained",
+            position = 13,
+            section = togglesSection
+    )
+    default boolean enableGroupTwo()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "specifyDragonHunterCrossbow",
-			name = "Dragon hunter crossbow",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyDragonHunterCrossbow()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "groupThreeColor",
+            name = "Group 3",
+            description = "Color of the light when an item from group 3 is obtained",
+            position = 14,
+            section = colorsSection
+    )
+    default Color groupThreeColor()
+    {
+        return Color.YELLOW;
+    }
 
-	@ConfigItem(
-			keyName = "specifyTwistedBuckler",
-			name = "Twisted buckler",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyTwistedBuckler()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "enableGroupThree",
+            name = "Recolor group 3",
+            description = "Enable recoloring the light of the chest when a unique from group 3 is obtained",
+            position = 15,
+            section = togglesSection
+    )
+    default boolean enableGroupThree()
+    {
+        return true;
+    }
 
-	@ConfigItem(
-			keyName = "specifyArcanePrayerScroll",
-			name = "Arcane prayer scroll",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyArcanePrayerScroll()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "groupTwistedBow",
+            name = "Twisted bow",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 16,
+            section = uniquesSection
+    )
+    default ItemGroup groupTwistedBow()
+    {
+        return ItemGroup.NONE;
+    }
 
-	@ConfigItem(
-			keyName = "specifyDexPrayerScroll",
-			name = "Dexterous Prayer Scroll",
-			description = "Color the light according to the 'Specific Unique' color when this item is obtained",
-			section = uniquesSection
-	)
-	default boolean specifyDexPrayerScroll()
-	{
-		return false;
-	}
+    @ConfigItem(
+            keyName = "groupKodai",
+            name = "Kodai insignia",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupKodai()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupElderMaul",
+            name = "Elder maul",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupElderMaul()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupClaws",
+            name = "Dragon claws",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupClaws()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupAncestralHat",
+            name = "Ancestral hat",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupAncestralHat()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupAncestralTop",
+            name = "Ancestral robe top",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupAncestralTop()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupAncestralBottom",
+            name = "Ancestral robe bottom",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupAncestralBottom()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupDinhs",
+            name = "Dinh's bulwark",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupDinhs()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupDHCB",
+            name = "Dragon hunter crossbow",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupDHCB()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupBuckler",
+            name = "Twisted buckler",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupBuckler()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupArcane",
+            name = "Arcane prayer scroll",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupArcane()
+    {
+        return ItemGroup.NONE;
+    }
+
+    @ConfigItem(
+            keyName = "groupDex",
+            name = "Dexterous prayer scroll",
+            description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            section = uniquesSection
+    )
+    default ItemGroup groupDex()
+    {
+        return ItemGroup.NONE;
+    }
+
 }

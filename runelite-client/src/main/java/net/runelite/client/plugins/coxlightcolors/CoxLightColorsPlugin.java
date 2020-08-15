@@ -41,340 +41,389 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @PluginDescriptor(
-		name = "CoX Light Colors",
-		description = "Set the colors of the light above the loot chest in Chambers of Xeric",
-		tags = {"bosses", "combat", "pve", "raid"}
+        name = "CoX Light Colors",
+        description = "Set the colors of the light above the loot chest in Chambers of Xeric",
+        tags = {"bosses", "combat", "pve", "raid"}
 )
 @Slf4j
 public class CoxLightColorsPlugin extends Plugin
 {
-	@Inject
-	private Client client;
+    @Inject
+    private Client client;
 
-	@Inject
-	private CoxLightColorsConfig config;
+    @Inject
+    private CoxLightColorsConfig config;
 
-	private GameObject lightObject;
-	private GameObject entranceObject;
-	private String uniqueItemReceived;
+    private GameObject lightObject;
+    private GameObject entranceObject;
+    private String uniqueItemReceived;
 
-	private int[] defaultLightFaceColors1;
-	private int[] defaultLightFaceColors2;
-	private int[] defaultLightFaceColors3;
+    private int[] defaultLightFaceColors1;
+    private int[] defaultLightFaceColors2;
+    private int[] defaultLightFaceColors3;
 
-	private int[] defaultEntranceFaceColors1;
-	private int[] defaultEntranceFaceColors2;
-	private int[] defaultEntranceFaceColors3;
+    private int[] defaultEntranceFaceColors1;
+    private int[] defaultEntranceFaceColors2;
+    private int[] defaultEntranceFaceColors3;
 
-	private static final String SPECIAL_LOOT_MESSAGE = "Special loot:";
-	private static final Pattern SPECIAL_DROP_MESSAGE = Pattern.compile("(.+) - (.+)");
-	private boolean waitForSpecialLoot;
+    private static final String SPECIAL_LOOT_MESSAGE = "Special loot:";
+    private static final Pattern SPECIAL_DROP_MESSAGE = Pattern.compile("(.+) - (.+)");
+    private boolean waitForSpecialLoot;
 
-	private static final int LIGHT_OBJECT_ID = 28848;
-	private static final int OLM_ENTRANCE_ID = 29879;
-	private static final int VARBIT_LIGHT_TYPE = 5456;
+    private static final int LIGHT_OBJECT_ID = 28848;
+    private static final int OLM_ENTRANCE_ID = 29879;
+    private static final int VARBIT_LIGHT_TYPE = 5456;
 
-	private static Integer currentLightType; // Default (null), No Unique (0), Unique (1), Dust (2), Twisted Kit (3)
+    private static Integer currentLightType; // Default (null), No Unique (0), Unique (1), Dust (2), Twisted Kit (3)
 
-	@Provides
-	CoxLightColorsConfig getConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(CoxLightColorsConfig.class);
-	}
+    @Provides
+    CoxLightColorsConfig getConfig(ConfigManager configManager)
+    {
+        return configManager.getConfig(CoxLightColorsConfig.class);
+    }
 
-	@Override
-	protected void startUp() throws Exception
-	{
-		updateLightColor();
-	}
+    @Override
+    protected void startUp() throws Exception
+    {
+        updateLightColor();
+    }
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-		resetFaceColors();
-		uniqueItemReceived = null;
-		lightObject = null;
-		entranceObject = null;
-		waitForSpecialLoot = false;
-	}
+    @Override
+    protected void shutDown() throws Exception
+    {
+        resetFaceColors();
+        uniqueItemReceived = null;
+        lightObject = null;
+        entranceObject = null;
+        waitForSpecialLoot = false;
+    }
 
-	@Subscribe
-	public void onVarbitChanged(VarbitChanged varbitChanged)
-	{
-		updateLightColor();
-		if (!isInRaid())
-		{
-			resetFaceColors();
-			uniqueItemReceived = null;
-			lightObject = null;
-			entranceObject = null;
-			waitForSpecialLoot = false;
-		}
-	}
+    @Subscribe
+    public void onVarbitChanged(VarbitChanged varbitChanged)
+    {
+        updateLightColor();
+        if (!isInRaid())
+        {
+            resetFaceColors();
+            uniqueItemReceived = null;
+            lightObject = null;
+            entranceObject = null;
+            waitForSpecialLoot = false;
+        }
+    }
 
-	@Subscribe
-	public void onChatMessage(ChatMessage chatMessage) {
-		if (client.getLocalPlayer() == null)
-			return;
+    @Subscribe
+    public void onChatMessage(ChatMessage chatMessage) {
+        if (client.getLocalPlayer() == null)
+            return;
 
-		if (chatMessage.getType() == ChatMessageType.FRIENDSCHATNOTIFICATION)
-		{
-			String message = Text.removeTags(chatMessage.getMessage());
-			Matcher matcher;
+        if (chatMessage.getType() == ChatMessageType.FRIENDSCHATNOTIFICATION)
+        {
+            String message = Text.removeTags(chatMessage.getMessage());
+            Matcher matcher;
 
-			if (message.startsWith(SPECIAL_LOOT_MESSAGE))
-			{
-				waitForSpecialLoot = true;
-				log.debug("Special loot message encountered");
-			}
-			if (waitForSpecialLoot)
-			{
-				matcher = SPECIAL_DROP_MESSAGE.matcher(message);
-				log.debug("Waiting for special loot in onChatMessage...");
-				if (matcher.find())
-				{
-					log.debug("Loot message with player and item encountered, matcher groups: {}", matcher.groupCount());
-					final String dropReceiver = matcher.group(1);
-					final String dropName = matcher.group(2);
-					log.debug("Special loot: {} received by {}", dropName, dropReceiver);
+            if (message.startsWith(SPECIAL_LOOT_MESSAGE))
+            {
+                waitForSpecialLoot = true;
+                log.info("Special loot message encountered");
+            }
+            if (waitForSpecialLoot)
+            {
+                matcher = SPECIAL_DROP_MESSAGE.matcher(message);
+                if (matcher.find())
+                {
+                    final String dropReceiver = matcher.group(1);
+                    final String dropName = matcher.group(2);
+                    log.info("Special loot: {} received by {}", dropName, dropReceiver);
 
-					if (dropReceiver.equals(client.getLocalPlayer().getName()))
-					{
-						log.debug("Special loot was received by local player: {}", dropName);
-						uniqueItemReceived = dropName;
-						if (lightObject != null)
-						{
-							log.debug("Light object exists after local player received drop. Recoloring it...");
-							recolorAllFaces(lightObject.getRenderable().getModel(),
-									(dropOptainedIsSpecial() ? config.specificUniqueColor() : getNewLightColor()), true);
-						} else {
-							log.debug("Light object was null when loot was acquired by local player...");
-						}
-					} else {
-						log.debug("Special loot was not acquired by local player... loot receiver: {}", dropReceiver);
-					}
-				} else {
-					log.debug("Waiting for special loot but the next message did not match the pattern: {}", message);
-				}
-			}
-		}
-	}
+                    if (dropReceiver.equals(client.getLocalPlayer().getName()))
+                    {
+                        log.info("Special loot was received by local player: {}", dropName);
+                        uniqueItemReceived = dropName;
+                        if (lightObject != null)
+                        {
+                            log.info("Light object not null when drop received by local player");
+                            Color newLightColor = getUniqueGroupColor(dropName);
+                            log.info("Recoloring light based on unique group: {}", String.format("#%06x", newLightColor.getRGB() & 0x00FFFFFF));
+                            recolorAllFaces(lightObject.getRenderable().getModel(),
+                                    newLightColor, true);
+                        } else {
+                            log.info("Light object null after local player received drop");
+                        }
+                    } else {
+                        log.info("Drop received by non-local player: {}, player: {}", dropName, dropReceiver);
+                    }
+                } else {
+                    log.info("Pattern not matched on message after waiting for special loot: {}", message);
+                }
+            }
+        }
+    }
 
-	@Subscribe
-	public void onGameObjectSpawned(GameObjectSpawned event)
-	{
-		GameObject obj = event.getGameObject();
-		if (obj.getId() == LIGHT_OBJECT_ID)
-		{
-			lightObject = obj;
-			updateLightColor();
-		}
-		else if (obj.getId() == OLM_ENTRANCE_ID)
-		{
-			entranceObject = obj;
-			recolorAllFaces(obj.getRenderable().getModel(), config.olmEntrance(), false);
-		}
-	}
+    @Subscribe
+    public void onGameObjectSpawned(GameObjectSpawned event)
+    {
+        GameObject obj = event.getGameObject();
+        if (obj.getId() == LIGHT_OBJECT_ID)
+        {
+            log.info("Light gameObject spawned");
+            lightObject = obj;
+            updateLightColor();
+        }
+        else if (obj.getId() == OLM_ENTRANCE_ID)
+        {
+            entranceObject = obj;
+            if (config.enableEntrance())
+            {
+                recolorAllFaces(obj.getRenderable().getModel(), config.olmEntrance(), false);
+            }
+        }
+    }
 
-	@Subscribe
-	public void onGameObjectDespawned(GameObjectDespawned event)
-	{
-		if (event.getGameObject().getId() == LIGHT_OBJECT_ID)
-		{
-			lightObject = null;
-		}
-		else if (event.getGameObject().getId() == OLM_ENTRANCE_ID)
-		{
-			entranceObject = null;
-		}
-	}
+    @Subscribe
+    public void onGameObjectDespawned(GameObjectDespawned event)
+    {
+        if (event.getGameObject().getId() == LIGHT_OBJECT_ID)
+        {
+            lightObject = null;
+        }
+        else if (event.getGameObject().getId() == OLM_ENTRANCE_ID)
+        {
+            entranceObject = null;
+        }
+    }
 
-	@Subscribe
-	public void onConfigChanged(ConfigChanged event)
-	{
-		if (lightObject != null)
-		{
-			log.debug("Light Object exists on config changed. Unique: {}", (uniqueItemReceived != null ? uniqueItemReceived : "null"));
-			recolorAllFaces(lightObject.getRenderable().getModel(),
-					(dropOptainedIsSpecial() ? config.specificUniqueColor() : getNewLightColor()), true);
-		}
-		if (entranceObject != null)
-		{
-			recolorAllFaces(entranceObject.getRenderable().getModel(), config.olmEntrance(), false);
-		}
-	}
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event)
+    {
+        resetFaceColors();
+        if (lightObject != null)
+        {
+            log.info("Light Object exists on config changed. Unique: {}", (uniqueItemReceived != null ? uniqueItemReceived : "null"));
+            recolorAllFaces(lightObject.getRenderable().getModel(),
+                    (uniqueItemReceived != null ? getUniqueGroupColor(uniqueItemReceived) : getNewLightColor()), true);
+        }
+        if (entranceObject != null)
+        {
+            if (config.enableEntrance())
+            {
+                recolorAllFaces(entranceObject.getRenderable().getModel(), config.olmEntrance(), false);
+            }
+        }
+    }
 
-	private void updateLightColor() {
-		if (isInRaid())
-		{
-			currentLightType = client.getVarbitValue(VARBIT_LIGHT_TYPE);
-			if (lightObject != null)
-			{
-				recolorAllFaces(lightObject.getRenderable().getModel(),
-						(dropOptainedIsSpecial() ? config.specificUniqueColor() : getNewLightColor()), true);
-			}
-		}
-	}
+    private void updateLightColor() {
+        if (isInRaid())
+        {
+            currentLightType = client.getVarbitValue(VARBIT_LIGHT_TYPE);
+            if (lightObject != null)
+            {
+                log.info("Light object not null in updateLightColor(), uniqueItemReceived: {}",
+                        uniqueItemReceived != null ? uniqueItemReceived : "null");
+                recolorAllFaces(lightObject.getRenderable().getModel(),
+                        (uniqueItemReceived != null ? getUniqueGroupColor(uniqueItemReceived) : getNewLightColor()), true);
+            } else {
+                log.info("lightObject null in updateLightColor()");
+            }
+        }
+    }
 
-	private boolean dropOptainedIsSpecial()
-	{
-		if (uniqueItemReceived == null || uniqueItemReceived.isEmpty())
-			return false;
-		switch (uniqueItemReceived.toLowerCase().trim())
-		{
-			case "twisted bow":
-				return config.specifyTwistedBow();
-			case "kodai insignia":
-				return config.specifyKodaiInsignia();
-			case "elder maul":
-				return config.specifyElderMaul();
-			case "dragon claws":
-				return config.specifyDragonClaws();
-			case "ancestral hat":
-				return config.specifyAncestralHat();
-			case "ancestral robe top":
-				return config.specifyAncestralRobeTop();
-			case "ancestral robe bottom":
-				return config.specifyAncestralRobeBottom();
-			case "dinh's bulwark":
-				return config.specifyDinhsBulwark();
-			case "dragon hunter crossbow":
-				return config.specifyDragonHunterCrossbow();
-			case "twisted buckler":
-				return config.specifyTwistedBuckler();
-			case "arcane prayer scroll":
-				return config.specifyArcanePrayerScroll();
-			case "dexterous prayer scroll":
-				return config.specifyDexPrayerScroll();
-			default:
-				return false;
-		}
-	}
+    private Color getUniqueGroupColor(String uniqueName)
+    {
+        if (uniqueName == null || uniqueName.isEmpty())
+            return getNewLightColor();
+        switch (uniqueName.toLowerCase().trim())
+        {
+            case "twisted bow":
+                log.info("Twisted bow matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupTwistedBow());
+            case "kodai insignia":
+                log.info("Kodai matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupKodai());
+            case "elder maul":
+                log.info("Elder maul matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupElderMaul());
+            case "dragon claws":
+                log.info("Dragon claws matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupClaws());
+            case "ancestral hat":
+                log.info("Ancestral hat matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupAncestralHat());
+            case "ancestral robe top":
+                log.info("Ancestral top matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupAncestralTop());
+            case "ancestral robe bottom":
+                log.info("Ancestral bottom matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupAncestralBottom());
+            case "dinh's bulwark":
+                log.info("Dinh's matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupDinhs());
+            case "dragon hunter crossbow":
+                log.info("DHCB matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupDHCB());
+            case "twisted buckler":
+                log.info("Buckler matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupBuckler());
+            case "arcane prayer scroll":
+                log.info("Arcane matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupArcane());
+            case "dexterous prayer scroll":
+                log.info("Dex matched in getUniqueGroupColor()");
+                return getGroupColor(config.groupDex());
+            default:
+                return getNewLightColor();
+        }
+    }
 
-	private Color getNewLightColor() {
-		if (currentLightType == null)
-			return null;
-		switch (currentLightType) {
-			case 1:
-				return config.noUnique();
-			case 2:
-				return config.unique();
-			case 3:
-				return config.dust();
-			case 4:
-				return config.twistedKit();
-			default:
-				return null;
-		}
-	}
+    private Color getGroupColor(ItemGroup group) {
+        switch (group)
+        {
+            case ONE:
+                return (config.enableGroupOne() ? config.groupOneColor() : getNewLightColor());
+            case TWO:
+                return (config.enableGroupTwo() ? config.groupTwoColor() : getNewLightColor());
+            case THREE:
+                return (config.enableGroupThree() ? config.groupThreeColor() : getNewLightColor());
+            default:
+                return getNewLightColor();
+        }
+    }
 
-	private void recolorAllFaces(Model model, Color color, boolean isLight)
-	{
-		if (model == null || color == null)
-			return;
+    private Color getNewLightColor() {
+        if (currentLightType == null)
+            return null;
+        switch (currentLightType) {
+            case 1:
+                return (config.enableStandardLoot() ? config.standardLoot() : null);
+            case 2:
+                return (config.enableUnique() ? config.unique() : null);
+            case 3:
+                return (config.enableDust() ? config.dust() : null);
+            case 4:
+                return (config.enableKit() ? config.twistedKit() : null);
+            default:
+                return null;
+        }
+    }
 
-		int rs2hsb = colorToRs2hsb(color);
-		int[] faceColors1 = model.getFaceColors1();
-		int[] faceColors2 = model.getFaceColors2();
-		int[] faceColors3 = model.getFaceColors3();
+    private void recolorAllFaces(Model model, Color color, boolean isLight)
+    {
+        if (model == null || color == null) {
+            log.info("Model {}, color {} in recolorAllFaces()",
+                    model == null ? "null" : "not null", color == null ? "null" : "not null");
+            return;
+        }
 
-		if (isLight && (defaultLightFaceColors1 == null || defaultLightFaceColors1.length == 0))
-		{
-			defaultLightFaceColors1 = faceColors1.clone();
-			defaultLightFaceColors2 = faceColors2.clone();
-			defaultLightFaceColors3 = faceColors3.clone();
-		}
-		else if (defaultEntranceFaceColors1 == null || defaultEntranceFaceColors1.length == 0)
-		{
-			defaultEntranceFaceColors1 = faceColors1.clone();
-			defaultEntranceFaceColors2 = faceColors2.clone();
-			defaultEntranceFaceColors3 = faceColors3.clone();
-		}
-		replaceFaceColorValues(faceColors1, faceColors2, faceColors3, rs2hsb);
-	}
+        int rs2hsb = colorToRs2hsb(color);
+        int[] faceColors1 = model.getFaceColors1();
+        int[] faceColors2 = model.getFaceColors2();
+        int[] faceColors3 = model.getFaceColors3();
 
-	private boolean isInRaid() {
-		return (client.getGameState() == GameState.LOGGED_IN && client.getVar(Varbits.IN_RAID) == 1);
-	}
+        if (isLight && (defaultLightFaceColors1 == null || defaultLightFaceColors1.length == 0))
+        {
+            defaultLightFaceColors1 = faceColors1.clone();
+            defaultLightFaceColors2 = faceColors2.clone();
+            defaultLightFaceColors3 = faceColors3.clone();
+        }
+        else if (defaultEntranceFaceColors1 == null || defaultEntranceFaceColors1.length == 0)
+        {
+            defaultEntranceFaceColors1 = faceColors1.clone();
+            defaultEntranceFaceColors2 = faceColors2.clone();
+            defaultEntranceFaceColors3 = faceColors3.clone();
+        }
+        log.info("Calling replaceFaceColorValues with color: {}, isLight: {}", String.format("#%06x", color.getRGB() & 0x00FFFFFF), isLight);
+        replaceFaceColorValues(faceColors1, faceColors2, faceColors3, rs2hsb);
+    }
 
-	private int colorToRs2hsb(Color color)
-	{
-		float[] hsbVals = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    private boolean isInRaid() {
+        return (client.getGameState() == GameState.LOGGED_IN && client.getVar(Varbits.IN_RAID) == 1);
+    }
 
-		// "Correct" the brightness level to avoid going to white at full saturation, or having a low brightness at
-		// low saturation
-		hsbVals[2] -= Math.min(hsbVals[1], hsbVals[2] / 2);
+    private int colorToRs2hsb(Color color)
+    {
+        float[] hsbVals = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
 
-		int encode_hue = (int)(hsbVals[0] * 63);
-		int encode_saturation = (int)(hsbVals[1] * 7);
-		int encode_brightness = (int)(hsbVals[2] * 127);
-		return (encode_hue << 10) + (encode_saturation << 7) + (encode_brightness);
-	}
+        // "Correct" the brightness level to avoid going to white at full saturation, or having a low brightness at
+        // low saturation
+        hsbVals[2] -= Math.min(hsbVals[1], hsbVals[2] / 2);
 
-	private void resetFaceColors() {
-		if (lightObject != null && lightObject.getRenderable().getModel() != null && defaultLightFaceColors1 != null && defaultLightFaceColors2 != null && defaultLightFaceColors3 != null)
-		{
-			Model model = lightObject.getRenderable().getModel();
-			replaceFaceColorValues(model.getFaceColors1(), model.getFaceColors2(), model.getFaceColors3(),
-					defaultLightFaceColors1, defaultLightFaceColors2, defaultLightFaceColors3);
-			defaultLightFaceColors1 = null;
-			defaultLightFaceColors2 = null;
-			defaultLightFaceColors3 = null;
-		}
-		if (entranceObject != null && entranceObject.getRenderable().getModel() != null
-				&& defaultEntranceFaceColors1 != null && defaultEntranceFaceColors2 != null && defaultEntranceFaceColors3 != null)
-		{
-			Model model = entranceObject.getRenderable().getModel();
-			replaceFaceColorValues(model.getFaceColors1(), model.getFaceColors2(), model.getFaceColors3(),
-					defaultEntranceFaceColors1, defaultEntranceFaceColors2, defaultEntranceFaceColors3);
-			defaultEntranceFaceColors1 = null;
-			defaultEntranceFaceColors2 = null;
-			defaultEntranceFaceColors3 = null;
-		}
-	}
+        int encode_hue = (int)(hsbVals[0] * 63);
+        int encode_saturation = (int)(hsbVals[1] * 7);
+        int encode_brightness = (int)(hsbVals[2] * 127);
+        return (encode_hue << 10) + (encode_saturation << 7) + (encode_brightness);
+    }
 
-	private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3,
-										int[] newFaceColors1, int[] newFaceColors2, int[] newFaceColors3) {
-		if (faceColors1.length == newFaceColors1.length && faceColors2.length == newFaceColors2.length
-				&& faceColors3.length == newFaceColors3.length)
-		{
-			System.arraycopy(newFaceColors1, 0, faceColors1, 0, faceColors1.length);
-			System.arraycopy(newFaceColors2, 0, faceColors2, 0, faceColors1.length);
-			System.arraycopy(newFaceColors3, 0, faceColors3, 0, faceColors1.length);
-		}
-	}
+    private void resetFaceColors() {
+        if (lightObject != null && lightObject.getRenderable().getModel() != null && defaultLightFaceColors1 != null && defaultLightFaceColors2 != null && defaultLightFaceColors3 != null)
+        {
+            Model model = lightObject.getRenderable().getModel();
+            replaceFaceColorValues(model.getFaceColors1(), model.getFaceColors2(), model.getFaceColors3(),
+                    defaultLightFaceColors1, defaultLightFaceColors2, defaultLightFaceColors3);
+            defaultLightFaceColors1 = null;
+            defaultLightFaceColors2 = null;
+            defaultLightFaceColors3 = null;
+        }
+        if (entranceObject != null && entranceObject.getRenderable().getModel() != null
+                && defaultEntranceFaceColors1 != null && defaultEntranceFaceColors2 != null && defaultEntranceFaceColors3 != null)
+        {
+            Model model = entranceObject.getRenderable().getModel();
+            replaceFaceColorValues(model.getFaceColors1(), model.getFaceColors2(), model.getFaceColors3(),
+                    defaultEntranceFaceColors1, defaultEntranceFaceColors2, defaultEntranceFaceColors3);
+            defaultEntranceFaceColors1 = null;
+            defaultEntranceFaceColors2 = null;
+            defaultEntranceFaceColors3 = null;
+        }
+    }
 
-	private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3, int globalReplacement) {
-		if (faceColors1.length > 0)
-		{
-			for (int i = 0; i < faceColors1.length; i++)
-			{
-				faceColors1[i] = globalReplacement;
-			}
-		}
-		if (faceColors2.length > 0)
-		{
-			for (int i = 0; i < faceColors2.length; i++)
-			{
-				faceColors2[i] = globalReplacement;
-			}
-		}
-		if (faceColors3.length > 0)
-		{
-			for (int i = 0; i < faceColors3.length; i++)
-			{
-				faceColors3[i] = globalReplacement;
-			}
-		}
-	}
+    private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3,
+                                        int[] newFaceColors1, int[] newFaceColors2, int[] newFaceColors3) {
+        if (faceColors1.length == newFaceColors1.length && faceColors2.length == newFaceColors2.length
+                && faceColors3.length == newFaceColors3.length)
+        {
+            System.arraycopy(newFaceColors1, 0, faceColors1, 0, faceColors1.length);
+            System.arraycopy(newFaceColors2, 0, faceColors2, 0, faceColors1.length);
+            System.arraycopy(newFaceColors3, 0, faceColors3, 0, faceColors1.length);
+        }
+    }
 
-	@Subscribe
-	public void onCommandExecuted(CommandExecuted event) {
-		if (event.getCommand().equals("unique")) {
-			ChatMessage lootMessage = new ChatMessage(null, ChatMessageType.FRIENDSCHATNOTIFICATION, null, "<col=ef20ff>Special loot:</col>", "", 0);
-			ChatMessage dropMessage = new ChatMessage(null, ChatMessageType.FRIENDSCHATNOTIFICATION, null, "<col=ef20ff>Ankou btw -</col> <col=ff0000>Dragon claws</col>", "", 0);
-			onChatMessage(lootMessage);
-			onChatMessage(dropMessage);
-		}
-	}
+    private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3, int globalReplacement) {
+        if (faceColors1.length > 0)
+        {
+            for (int i = 0; i < faceColors1.length; i++)
+            {
+                faceColors1[i] = globalReplacement;
+            }
+        }
+        if (faceColors2.length > 0)
+        {
+            for (int i = 0; i < faceColors2.length; i++)
+            {
+                faceColors2[i] = globalReplacement;
+            }
+        }
+        if (faceColors3.length > 0)
+        {
+            for (int i = 0; i < faceColors3.length; i++)
+            {
+                faceColors3[i] = globalReplacement;
+            }
+        }
+    }
+
+    @Subscribe
+    public void onCommandExecuted(CommandExecuted event) {
+        if (event.getCommand().equals("unique")) {
+            StringBuilder uniqueName = new StringBuilder();
+            for (String arg : event.getArguments())
+            {
+                uniqueName.append(arg).append(' ');
+            }
+            uniqueName.deleteCharAt(uniqueName.lastIndexOf(" "));
+            log.info(uniqueName.toString());
+            ChatMessage lootMessage = new ChatMessage(null, ChatMessageType.FRIENDSCHATNOTIFICATION, null, "<col=ef20ff>Special loot:</col>", "", 0);
+            ChatMessage dropMessage = new ChatMessage(null, ChatMessageType.FRIENDSCHATNOTIFICATION, null, "<col=ef20ff>Ankou btw -</col> <col=ff0000>" + uniqueName.toString() + "</col>", "", 0);
+            onChatMessage(lootMessage);
+            onChatMessage(dropMessage);
+        }
+    }
 }
