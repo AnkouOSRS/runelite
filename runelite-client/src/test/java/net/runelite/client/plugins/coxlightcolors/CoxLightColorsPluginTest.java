@@ -47,7 +47,7 @@ public class CoxLightColorsPluginTest {
 
         when(client.getLocalPlayer()).thenReturn(player);
         when(player.getName()).thenReturn("Ankou btw");
-        when(coxLightColorsConfig.specifyDragonClaws()).thenReturn(true);
+//        when(coxLightColorsConfig.specifyDragonClaws()).thenReturn(true);
     }
 
     @Test

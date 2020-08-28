@@ -51,7 +51,8 @@ public interface CoxLightColorsConfig extends Config
     @ConfigSection(
             name = "Toggles",
             description = "Toggle different recolors on or off",
-            position = 2
+            position = 2,
+            closedByDefault = true
     )
     String togglesSection = "toggles";
 
@@ -69,7 +70,7 @@ public interface CoxLightColorsConfig extends Config
 
     @ConfigItem(
             keyName = "enableStandardLoot",
-            name = "Recolor no uniques",
+            name = "Recolor standard loot",
             description = "Enable recoloring the light of the chest when no unique is obtained",
             position = 1,
             section = togglesSection
@@ -381,3 +382,4 @@ public interface CoxLightColorsConfig extends Config
     }
 
 }
+
