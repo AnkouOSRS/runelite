@@ -125,7 +125,7 @@ public class CoxLightColorsPlugin extends Plugin
             if (message.startsWith(SPECIAL_LOOT_MESSAGE))
             {
                 waitForSpecialLoot = true;
-                log.info("Special loot message encountered");
+                log.debug("Special loot message encountered");
             }
             if (waitForSpecialLoot)
             {
@@ -134,7 +134,7 @@ public class CoxLightColorsPlugin extends Plugin
                 {
                     final String dropReceiver = matcher.group(1);
                     final String dropName = matcher.group(2);
-                    log.info("Special loot: {} received by {}", dropName, dropReceiver);
+                    log.debug("Special loot: {} received by {}", dropName, dropReceiver);
 
                     if (dropReceiver.equals(client.getLocalPlayer().getName()))
                     {
@@ -142,19 +142,19 @@ public class CoxLightColorsPlugin extends Plugin
                         uniqueItemReceived = dropName;
                         if (lightObject != null)
                         {
-                            log.info("Light object not null when drop received by local player");
                             Color newLightColor = getUniqueGroupColor(dropName);
-                            log.info("Recoloring light based on unique group: {}", String.format("#%06x", newLightColor.getRGB() & 0x00FFFFFF));
+                            log.info("Light object not null when special loot received by local player. Recoloring light " +
+                                    "based on unique group: {}", String.format("#%06x", newLightColor.getRGB() & 0x00FFFFFF));
                             recolorAllFaces(lightObject.getRenderable().getModel(),
                                     newLightColor, true);
                         } else {
-                            log.info("Light object null after local player received drop");
+                            log.error("Light object null after local player received drop");
                         }
                     } else {
-                        log.info("Drop received by non-local player: {}, player: {}", dropName, dropReceiver);
+                        log.debug("Drop received by non-local player: {}, player: {}", dropName, dropReceiver);
                     }
                 } else {
-                    log.info("Pattern not matched on message after waiting for special loot: {}", message);
+                    log.debug("Pattern not matched on message after waiting for special loot: {}", message);
                 }
             }
         }
@@ -166,7 +166,7 @@ public class CoxLightColorsPlugin extends Plugin
         GameObject obj = event.getGameObject();
         if (obj.getId() == LIGHT_OBJECT_ID)
         {
-            log.info("Light gameObject spawned");
+            log.debug("Light gameObject spawned");
             lightObject = obj;
             updateLightColor();
         }
@@ -199,7 +199,6 @@ public class CoxLightColorsPlugin extends Plugin
         resetFaceColors();
         if (lightObject != null)
         {
-            log.info("Light Object exists on config changed. Unique: {}", (uniqueItemReceived != null ? uniqueItemReceived : "null"));
             recolorAllFaces(lightObject.getRenderable().getModel(),
                     (uniqueItemReceived != null ? getUniqueGroupColor(uniqueItemReceived) : getNewLightColor()), true);
         }
@@ -213,62 +212,44 @@ public class CoxLightColorsPlugin extends Plugin
     }
 
     private void updateLightColor() {
-        if (isInRaid())
+        if (lightObject != null)
         {
             currentLightType = client.getVarbitValue(VARBIT_LIGHT_TYPE);
-            if (lightObject != null)
-            {
-                log.info("Light object not null in updateLightColor(), uniqueItemReceived: {}",
-                        uniqueItemReceived != null ? uniqueItemReceived : "null");
-                recolorAllFaces(lightObject.getRenderable().getModel(),
-                        (uniqueItemReceived != null ? getUniqueGroupColor(uniqueItemReceived) : getNewLightColor()), true);
-            } else {
-                log.info("lightObject null in updateLightColor()");
-            }
+            recolorAllFaces(lightObject.getRenderable().getModel(),
+                    (uniqueItemReceived != null ? getUniqueGroupColor(uniqueItemReceived) : getNewLightColor()), true);
         }
     }
 
     private Color getUniqueGroupColor(String uniqueName)
     {
+        log.debug("uniqueName in getUniqueGroupColor: {}", (uniqueName == null ? "null" : uniqueName));
         if (uniqueName == null || uniqueName.isEmpty())
             return getNewLightColor();
         switch (uniqueName.toLowerCase().trim())
         {
             case "twisted bow":
-                log.info("Twisted bow matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupTwistedBow());
             case "kodai insignia":
-                log.info("Kodai matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupKodai());
             case "elder maul":
-                log.info("Elder maul matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupElderMaul());
             case "dragon claws":
-                log.info("Dragon claws matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupClaws());
             case "ancestral hat":
-                log.info("Ancestral hat matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupAncestralHat());
             case "ancestral robe top":
-                log.info("Ancestral top matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupAncestralTop());
             case "ancestral robe bottom":
-                log.info("Ancestral bottom matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupAncestralBottom());
             case "dinh's bulwark":
-                log.info("Dinh's matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupDinhs());
             case "dragon hunter crossbow":
-                log.info("DHCB matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupDHCB());
             case "twisted buckler":
-                log.info("Buckler matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupBuckler());
             case "arcane prayer scroll":
-                log.info("Arcane matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupArcane());
             case "dexterous prayer scroll":
-                log.info("Dex matched in getUniqueGroupColor()");
                 return getGroupColor(config.groupDex());
             default:
                 return getNewLightColor();
@@ -309,8 +290,6 @@ public class CoxLightColorsPlugin extends Plugin
     private void recolorAllFaces(Model model, Color color, boolean isLight)
     {
         if (model == null || color == null) {
-            log.info("Model {}, color {} in recolorAllFaces()",
-                    model == null ? "null" : "not null", color == null ? "null" : "not null");
             return;
         }
 
@@ -331,7 +310,8 @@ public class CoxLightColorsPlugin extends Plugin
             defaultEntranceFaceColors2 = faceColors2.clone();
             defaultEntranceFaceColors3 = faceColors3.clone();
         }
-        log.info("Calling replaceFaceColorValues with color: {}, isLight: {}", String.format("#%06x", color.getRGB() & 0x00FFFFFF), isLight);
+        log.debug("Calling replaceFaceColorValues with color: {}, on {}", String.format("#%06x", color.getRGB() & 0x00FFFFFF),
+                (isLight ? "light" : "entrance"));
         replaceFaceColorValues(faceColors1, faceColors2, faceColors3, rs2hsb);
     }
 
@@ -407,23 +387,6 @@ public class CoxLightColorsPlugin extends Plugin
             {
                 faceColors3[i] = globalReplacement;
             }
-        }
-    }
-
-    @Subscribe
-    public void onCommandExecuted(CommandExecuted event) {
-        if (event.getCommand().equals("unique")) {
-            StringBuilder uniqueName = new StringBuilder();
-            for (String arg : event.getArguments())
-            {
-                uniqueName.append(arg).append(' ');
-            }
-            uniqueName.deleteCharAt(uniqueName.lastIndexOf(" "));
-            log.info(uniqueName.toString());
-            ChatMessage lootMessage = new ChatMessage(null, ChatMessageType.FRIENDSCHATNOTIFICATION, null, "<col=ef20ff>Special loot:</col>", "", 0);
-            ChatMessage dropMessage = new ChatMessage(null, ChatMessageType.FRIENDSCHATNOTIFICATION, null, "<col=ef20ff>Ankou btw -</col> <col=ff0000>" + uniqueName.toString() + "</col>", "", 0);
-            onChatMessage(lootMessage);
-            onChatMessage(dropMessage);
         }
     }
 }
