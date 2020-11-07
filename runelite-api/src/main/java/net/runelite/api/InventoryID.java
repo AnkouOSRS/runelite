@@ -78,6 +78,14 @@ public enum InventoryID
 	 */
 	CHAMBERS_OF_XERIC_CHEST(581),
 	/**
+	 * Chambers of Xeric private chest.
+	 */
+	CHAMBERS_OF_XERIC_CHEST_PRIVATE(551),
+	/**
+	 * Chambers of Xeric public chest.
+	 */
+	CHAMBERS_OF_XERIC_CHEST_PUBLIC(271),
+	/**
 	 * Theater of Blood reward chest inventory (Raids 2)
 	 */
 	THEATRE_OF_BLOOD_CHEST(612),
