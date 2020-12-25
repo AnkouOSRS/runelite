@@ -45,13 +45,15 @@ import java.util.List;
 public class ZukTimersPanel extends PluginPanel
 {
 	private final ItemManager itemManager;
+	private ZukTimer zukStopwatch;
+	private ZukTimerInfobox infobox;
 
 	private JLabel timer;
 	private JButton resetBtn;
 
 	private long currentTime = 210;
 	private boolean running = false;
-	private ZukProgress progress = ZukProgress.PRE_FIRST_SET;
+	private ZukProgress progress;
 
 	JPanel buttonPanel;
 	private JPanel buttonFirstSet;
@@ -62,9 +64,12 @@ public class ZukTimersPanel extends PluginPanel
 	private List<JPanel> buttonsToShow = new ArrayList<>();
 	private static final ImageIcon ARROW_RIGHT_ICON = new ImageIcon(ImageUtil.getResourceStreamFromClass(ZukTimersPlugin.class, "/util/arrow_right.png"));
 
-	ZukTimersPanel(ItemManager itemManager)
+	ZukTimersPanel(ItemManager itemManager, ZukTimer zukStopwatch, ZukProgress progress, ZukTimerInfobox infobox)
 	{
 		this.itemManager = itemManager;
+		this.zukStopwatch = zukStopwatch;
+		this.progress = progress;
+		this.infobox = infobox;
 //		this.config = config;
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -80,7 +85,7 @@ public class ZukTimersPanel extends PluginPanel
 		resetBtn.addActionListener(e -> {
 			running = false;
 			currentTime = 210;
-			progress = ZukProgress.PRE_FIRST_SET;
+			this.progress = ZukProgress.PRE_FIRST_SET;
 			progressUpdated();
 		});
 
@@ -100,6 +105,98 @@ public class ZukTimersPanel extends PluginPanel
 		add(buttonPanel);
 		add(resetBtn);
 		setBackground(ColorScheme.DARK_GRAY_COLOR);
+	}
+
+	private void mainButtonPressed()
+	{
+		switch (progress)
+		{
+			case PRE_FIRST_SET:
+				progress = ZukProgress.ABOVE_SIX_HUNDRED;
+				running = true;
+				break;
+			case ABOVE_SIX_HUNDRED:
+				progress = ZukProgress.PAUSED;
+				running = false;
+				currentTime = currentTime + 105; // add 1:45 in seconds
+				break;
+			case PAUSED:
+				progress = ZukProgress.UNPAUSED;
+				running = true;
+				break;
+		}
+		progressUpdated();
+	}
+
+	protected void start()
+	{
+		this.zukStopwatch.start();
+	}
+
+	private void progressUpdated()
+	{
+		switch (progress)
+		{
+			case PRE_FIRST_SET:
+				buttonPanel.removeAll();
+				buttonFirstSet = getZukButtonPanel(ZukProgress.PRE_FIRST_SET);
+				buttonPanel.add(buttonFirstSet);
+				buttonAbove600 = getZukButtonPanel(ZukProgress.ABOVE_SIX_HUNDRED);
+				buttonPanel.add(buttonAbove600);
+				buttonPaused = getZukButtonPanel(ZukProgress.PAUSED);
+				buttonPanel.add(buttonPaused);
+				buttonUnpaused = getZukButtonPanel(ZukProgress.UNPAUSED);
+				buttonPanel.add(buttonUnpaused);
+				break;
+			case ABOVE_SIX_HUNDRED:
+				buttonPanel.remove(buttonFirstSet);
+				buttonPanel.remove(buttonAbove600);
+				buttonAbove600 = getZukButtonPanel(ZukProgress.ABOVE_SIX_HUNDRED);
+				buttonPanel.add(buttonAbove600,0);
+				break;
+			case PAUSED:
+				buttonPanel.remove(buttonAbove600);
+				buttonPanel.remove(buttonPaused);
+				buttonPaused = getZukButtonPanel(ZukProgress.PAUSED);
+				buttonPanel.add(buttonPaused,0);
+				break;
+			case UNPAUSED:
+				buttonPanel.remove(buttonPaused);
+				buttonPanel.remove(buttonUnpaused);
+				buttonUnpaused = getZukButtonPanel(ZukProgress.UNPAUSED);
+				buttonPanel.add(buttonUnpaused,0);
+				break;
+		}
+	}
+
+	static String getFormattedDuration(long duration)
+	{
+		long mins = (duration / 60) % 60;
+		long seconds = duration % 60;
+
+		return String.format("%01d:%02d", mins, seconds);
+	}
+
+	public void update()
+	{
+		if (running)
+		{
+			if (currentTime <= 0)
+			{
+				currentTime = 210;
+			} else {
+				currentTime--;
+			}
+		}
+		timer.setText(getFormattedDuration(currentTime));
+		if (currentTime <= 10)
+		{
+				timer.setForeground(Color.RED);
+		}
+		else if (timer.getForeground() != Color.WHITE)
+		{
+			timer.setForeground(Color.WHITE);
+		}
 	}
 
 	private JPanel getZukButtonPanel(ZukProgress progress)
@@ -178,97 +275,4 @@ public class ZukTimersPanel extends PluginPanel
 		return panel;
 	}
 
-	private void mainButtonPressed()
-	{
-		switch (progress)
-		{
-			case PRE_FIRST_SET:
-				progress = ZukProgress.ABOVE_SIX_HUNDRED;
-				running = true;
-				break;
-			case ABOVE_SIX_HUNDRED:
-				progress = ZukProgress.PAUSED;
-				running = false;
-				currentTime = currentTime + 105; // add 1:45 in seconds
-				break;
-			case PAUSED:
-				progress = ZukProgress.UNPAUSED;
-				running = true;
-				break;
-		}
-		progressUpdated();
-	}
-
-	private void progressUpdated()
-	{
-		switch (progress)
-		{
-			case PRE_FIRST_SET:
-				buttonPanel.removeAll();
-				buttonFirstSet = getZukButtonPanel(ZukProgress.PRE_FIRST_SET);
-				buttonPanel.add(buttonFirstSet);
-				buttonAbove600 = getZukButtonPanel(ZukProgress.ABOVE_SIX_HUNDRED);
-				buttonPanel.add(buttonAbove600);
-				buttonPaused = getZukButtonPanel(ZukProgress.PAUSED);
-				buttonPanel.add(buttonPaused);
-				buttonUnpaused = getZukButtonPanel(ZukProgress.UNPAUSED);
-				buttonPanel.add(buttonUnpaused);
-				break;
-			case ABOVE_SIX_HUNDRED:
-				buttonPanel.remove(buttonFirstSet);
-				buttonPanel.remove(buttonAbove600);
-				buttonAbove600 = getZukButtonPanel(ZukProgress.ABOVE_SIX_HUNDRED);
-				buttonPanel.add(buttonAbove600,0);
-				break;
-			case PAUSED:
-				buttonPanel.remove(buttonAbove600);
-				buttonPanel.remove(buttonPaused);
-				buttonPaused = getZukButtonPanel(ZukProgress.PAUSED);
-				buttonPanel.add(buttonPaused,0);
-				break;
-			case UNPAUSED:
-				buttonPanel.remove(buttonPaused);
-				buttonPanel.remove(buttonUnpaused);
-				buttonUnpaused = getZukButtonPanel(ZukProgress.UNPAUSED);
-				buttonPanel.add(buttonUnpaused,0);
-				break;
-		}
-	}
-
-	static String getFormattedDuration(long duration)
-	{
-		long mins = (duration / 60) % 60;
-		long seconds = duration % 60;
-
-		return String.format("%01d:%02d", mins, seconds);
-	}
-
-//	@Override
-	public int getUpdateInterval()
-	{
-		return 5; // 1 second
-	}
-
-//	@Override
-	public void update()
-	{
-		if (running)
-		{
-			if (currentTime <= 0)
-			{
-				currentTime = 210;
-			} else {
-				currentTime--;
-			}
-		}
-		timer.setText(getFormattedDuration(currentTime));
-		if (currentTime <= 10)
-		{
-				timer.setForeground(Color.RED);
-		}
-		else if (timer.getForeground() != Color.WHITE)
-		{
-			timer.setForeground(Color.WHITE);
-		}
-	}
 }
