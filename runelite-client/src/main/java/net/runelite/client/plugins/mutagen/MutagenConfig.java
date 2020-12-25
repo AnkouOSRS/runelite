@@ -32,12 +32,12 @@ import net.runelite.client.config.ConfigItem;
 public interface MutagenConfig extends Config
 {
 	@ConfigItem(
-		keyName = "mutagen",
+		keyName = "mutagenToUse",
 		name = "Mutagen",
 		description = "Which mutagen to use for the serp helm",
 		position = 0
 	)
-	default Mutagen mutagen()
+	default Mutagen mutagenToUse()
 	{
 		return Mutagen.MAGMA;
 	}
