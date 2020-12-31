@@ -26,93 +26,122 @@
  */
 package net.runelite.client.plugins.mutagen;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
-import net.runelite.api.events.CommandExecuted;
+import net.runelite.api.events.*;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
 import javax.inject.Inject;
+import java.util.Set;
 
 @PluginDescriptor(
-	name = "Mutagen",
-	description = "Change which mutagenToUse your serp helm has",
-	tags = {"serp", "helm", "mutagenToUse"}
+        name = "Mutagen",
+        description = "Change which mutagen your serp helm has",
+        tags = {"serp", "helm", "mutagen"}
 )
 @Slf4j
-public class MutagenPlugin extends Plugin
-{
-	@Inject
-	private Client client;
+public class MutagenPlugin extends Plugin {
+    @Inject
+    private Client client;
 
-	@Inject
-	private MutagenConfig mutagenConfig;
+    @Inject
+    private MutagenConfig mutagenConfig;
 
-	private int originalHelmID = -1;
+    @Inject
+    private ItemManager itemManager;
 
-	@Override
-	protected void startUp()
-	{
-        if (originalHelmID == -1 && client.getGameState() == GameState.LOGGED_IN && client.getLocalPlayer() != null)
-        {
-            originalHelmID = client.getLocalPlayer().getPlayerComposition().getEquipmentIds()[KitType.HEAD.getIndex()];
-        }
-	    recolorHelm();
-	}
+    private int originalHelmID = -1;
+    private final Set<Mutagen> MUTAGENS = ImmutableSet.of(Mutagen.NONE, Mutagen.TANZANITE, Mutagen.MAGMA);
+    private final Set<Integer> SERP_HELMS =
+            ImmutableSet.of(ItemID.SERPENTINE_HELM, ItemID.MAGMA_HELM, ItemID.TANZANITE_HELM);
+    private final Set<Integer> SERP_HELMS_UNCHARGED = ImmutableSet.of(ItemID.SERPENTINE_HELM_UNCHARGED,
+            ItemID.MAGMA_HELM_UNCHARGED, ItemID.TANZANITE_HELM_UNCHARGED);
 
-	@Override
-	protected void shutDown()
-	{
-	    recolorHelm(originalHelmID);
-	}
-
-	@Provides
-	MutagenConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(MutagenConfig.class);
-	}
-
-	@Subscribe
-	public void onConfigChanged(ConfigChanged configChanged)
-	{
-		if (configChanged.getGroup().equals("mutagen"))
-		{
-		    recolorHelm();
-		}
-	}
-
-	private void recolorHelm()
-    {
-    	log.info("Recoloring serp helm to {}", mutagenConfig.mutagenToUse().getName());
-        recolorHelm(mutagenConfig.mutagenToUse().getId());
+    @Override
+    protected void startUp() {
+        recolorHelm();
     }
 
-    private void recolorHelm(int helmID)
-    {
-        if (client.getGameState() == GameState.LOGGED_IN && client.getLocalPlayer() != null)
-        {
-            PlayerComposition pc = client.getLocalPlayer().getPlayerComposition();
-            if (originalHelmID == -1)
-			{
-				originalHelmID = pc.getEquipmentIds()[KitType.HEAD.getIndex()];
-			}
-			log.info("Original helm ID: {}", originalHelmID);
-            log.info("New helm ID: {}", helmID + 512);
-            pc.getEquipmentIds()[KitType.HEAD.getIndex()] = helmID + 512;
+    @Override
+    protected void shutDown() {
+        recolorHelm(originalHelmID, originalHelmID);
+        originalHelmID = -1;
+    }
+
+    @Provides
+    MutagenConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(MutagenConfig.class);
+    }
+
+    @Subscribe
+    public void onConfigChanged(ConfigChanged configChanged) {
+        if (configChanged.getGroup().equals("mutagen")) {
+            recolorHelm();
         }
     }
 
     @Subscribe
-    private void onCommandExecuted(CommandExecuted event)
-	{
-		if (event.getCommand().equals("serp"))
-		{
-			client.getLocalPlayer().getPlayerComposition().getEquipmentIds()[KitType.HEAD.getIndex()] = 13711;
-		}
-	}
+    public void onGameStateChanged(GameStateChanged event) {
+        if (event.getGameState() == GameState.LOGGED_IN) {
+            recolorHelm();
+        }
+    }
+
+    @Subscribe
+    public void onItemContainerChanged(ItemContainerChanged event) {
+        if (event.getItemContainer() != client.getItemContainer(InventoryID.EQUIPMENT)) {
+            return;
+        }
+        recolorHelm();
+    }
+
+    @Subscribe
+    public void onPlayerChanged(PlayerChanged event)
+    {
+        if (event.getPlayer().equals(client.getLocalPlayer()))
+        {
+            recolorHelm();
+        }
+    }
+
+    private void recolorHelm() {
+        log.debug("Recoloring serp helm to {}", mutagenConfig.mutagenToUse().getName());
+        recolorHelm(mutagenConfig.mutagenToUse().getItemID(), mutagenConfig.mutagenToUse().getUnchargedID());
+    }
+
+    private void recolorHelm(int itemID, int unchargedID) {
+        if (client.getGameState() == GameState.LOGGED_IN && client.getLocalPlayer() != null) {
+            PlayerComposition pc = client.getLocalPlayer().getPlayerComposition();
+            if (pc != null)
+            {
+                int currentHelmID = pc.getEquipmentIds()[KitType.HEAD.getIndex()] - 512;
+                int newHelmID = -1;
+
+                if (SERP_HELMS.contains(currentHelmID))
+                {
+                    newHelmID = itemID;
+                }
+                else if (SERP_HELMS_UNCHARGED.contains(currentHelmID))
+                {
+                    newHelmID = unchargedID;
+                }
+                if (originalHelmID == -1) {
+                    originalHelmID = currentHelmID;
+                }
+                if (newHelmID != -1)
+                {
+                    pc.getEquipmentIds()[KitType.HEAD.getIndex()] = newHelmID + 512;
+                    pc.setHash();
+                }
+            }
+        }
+    }
 }
