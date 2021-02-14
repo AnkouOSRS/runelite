@@ -43,7 +43,7 @@ import javax.inject.Inject;
 import java.util.Set;
 
 @PluginDescriptor(
-        name = "Mutagen",
+        name = "Mutagen Picker",
         description = "Change which mutagen your serp helm has",
         tags = {"serp", "helm", "mutagen"}
 )
@@ -55,11 +55,7 @@ public class MutagenPlugin extends Plugin {
     @Inject
     private MutagenConfig mutagenConfig;
 
-    @Inject
-    private ItemManager itemManager;
-
     private int originalHelmID = -1;
-    private final Set<Mutagen> MUTAGENS = ImmutableSet.of(Mutagen.NONE, Mutagen.TANZANITE, Mutagen.MAGMA);
     private final Set<Integer> SERP_HELMS =
             ImmutableSet.of(ItemID.SERPENTINE_HELM, ItemID.MAGMA_HELM, ItemID.TANZANITE_HELM);
     private final Set<Integer> SERP_HELMS_UNCHARGED = ImmutableSet.of(ItemID.SERPENTINE_HELM_UNCHARGED,
