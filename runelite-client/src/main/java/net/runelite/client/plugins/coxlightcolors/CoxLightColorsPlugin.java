@@ -189,23 +189,6 @@ public class CoxLightColorsPlugin extends Plugin
     }
 
     @Subscribe
-    public void onCommandExecuted(CommandExecuted event)
-    {
-        if (event.getCommand().equals("coxloot"))
-        {
-            String item = uniques.stream().skip(new Random().nextInt(uniques.size())).findFirst().orElse("Dragon claws");
-            ChatMessage chat1 = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Congratulations - your raid is complete!</col><br>Team size: <col=ff0000>3 players</col> Duration:</col> <col=ff0000>41:10</col> Personal best: </col><col=ff0000>40:03</col>", "", 0);
-            ChatMessage chat2 = new ChatMessage(null, GAMEMESSAGE, "", "Your completed Chambers of Xeric Challenge Mode count is: <col=ff0000>13</col>.", "", 0);
-            ChatMessage chat3 = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Special loot:</col>", "", 0);
-            ChatMessage chat4 = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Ankou btw -</col> <col=ff0000>" + item + "</col>", "", 0);
-            onChatMessage(chat1);
-            onChatMessage(chat2);
-            onChatMessage(chat3);
-            onChatMessage(chat4);
-        }
-    }
-
-    @Subscribe
     public void onGameObjectDespawned(GameObjectDespawned event)
     {
         if (event.getGameObject().getId() == LIGHT_OBJECT_ID)
