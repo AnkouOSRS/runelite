@@ -29,24 +29,24 @@ import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.util.QuantityFormatter;
 import net.runelite.client.util.Text;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import java.awt.*;
+import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static net.runelite.api.ChatMessageType.FRIENDSCHATNOTIFICATION;
+import static net.runelite.api.ChatMessageType.GAMEMESSAGE;
 
 @PluginDescriptor(
         name = "CoX Light Colors",
@@ -117,8 +117,6 @@ public class CoxLightColorsPlugin extends Plugin
         if (!isInRaid())
         {
             resetFaceColors();
-            lightObject = null;
-            entranceObject = null;
         }
     }
 
@@ -134,6 +132,7 @@ public class CoxLightColorsPlugin extends Plugin
             if (message.contains("your raid is complete!"))
             {
                 uniqueItemReceived = null;
+                return;
             }
 
             Matcher matcher;
@@ -143,24 +142,27 @@ public class CoxLightColorsPlugin extends Plugin
             {
                 final String dropReceiver = matcher.group(1).trim();
                 final String dropName = matcher.group(2).trim();
-                log.info("Special loot: {} received by {}", dropName, dropReceiver);
 
-                if (uniques.contains(dropName) && dropReceiver.equals(client.getLocalPlayer().getName()))
+                if (uniques.contains(dropName))
                 {
-                    uniqueItemReceived = dropName;
-                    if (lightObject != null)
+                    log.info("Special loot: {} received by {}", dropName, dropReceiver);
+                    if (dropReceiver.equals(client.getLocalPlayer().getName()))
                     {
-                        Color newLightColor = getUniqueGroupColor(dropName);
-                        log.info("Light object not null when special loot received by local player. Recoloring light " +
-                                "based on unique group: {}", String.format("#%06x", newLightColor.getRGB() & 0x00FFFFFF));
-                        recolorAllFaces(lightObject.getRenderable().getModel(),
-                                newLightColor, true);
+                        uniqueItemReceived = dropName;
+                        if (lightObject != null)
+                        {
+                            Color newLightColor = getUniqueGroupColor(dropName);
+                            log.info("Light object not null when special loot received by local player. Recoloring light " +
+                                    "based on unique group: {}", String.format("#%06x", newLightColor.getRGB() & 0x00FFFFFF));
+                            recolorAllFaces(lightObject.getRenderable().getModel(),
+                                    newLightColor, true);
 
+                        } else {
+                            log.error("Light object null after local player received drop");
+                        }
                     } else {
-                        log.error("Light object null after local player received drop");
+                        log.debug("Drop received by non-local player: {}, player: {}", dropName, dropReceiver);
                     }
-                } else {
-                    log.debug("Drop received by non-local player: {}, player: {}", dropName, dropReceiver);
                 }
             }
         }
@@ -172,7 +174,7 @@ public class CoxLightColorsPlugin extends Plugin
         GameObject obj = event.getGameObject();
         if (obj.getId() == LIGHT_OBJECT_ID)
         {
-            log.debug("Light gameObject spawned");
+            log.info("Light gameObject spawned");
             lightObject = obj;
             updateLightColor();
         }
@@ -187,10 +189,28 @@ public class CoxLightColorsPlugin extends Plugin
     }
 
     @Subscribe
+    public void onCommandExecuted(CommandExecuted event)
+    {
+        if (event.getCommand().equals("coxloot"))
+        {
+            String item = uniques.stream().skip(new Random().nextInt(uniques.size())).findFirst().orElse("Dragon claws");
+            ChatMessage chat1 = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Congratulations - your raid is complete!</col><br>Team size: <col=ff0000>3 players</col> Duration:</col> <col=ff0000>41:10</col> Personal best: </col><col=ff0000>40:03</col>", "", 0);
+            ChatMessage chat2 = new ChatMessage(null, GAMEMESSAGE, "", "Your completed Chambers of Xeric Challenge Mode count is: <col=ff0000>13</col>.", "", 0);
+            ChatMessage chat3 = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Special loot:</col>", "", 0);
+            ChatMessage chat4 = new ChatMessage(null, FRIENDSCHATNOTIFICATION, "", "<col=ef20ff>Ankou btw -</col> <col=ff0000>" + item + "</col>", "", 0);
+            onChatMessage(chat1);
+            onChatMessage(chat2);
+            onChatMessage(chat3);
+            onChatMessage(chat4);
+        }
+    }
+
+    @Subscribe
     public void onGameObjectDespawned(GameObjectDespawned event)
     {
         if (event.getGameObject().getId() == LIGHT_OBJECT_ID)
         {
+            log.info("Light gameObject despawned");
             lightObject = null;
         }
         else if (event.getGameObject().getId() == OLM_ENTRANCE_ID)
@@ -214,28 +234,6 @@ public class CoxLightColorsPlugin extends Plugin
             {
                 recolorAllFaces(entranceObject.getRenderable().getModel(), config.olmEntrance(), false);
             }
-        }
-    }
-
-    @Subscribe
-    public void onGameStateChanged(GameStateChanged event)
-    {
-        if (event.getGameState().equals(GameState.LOGGED_IN) && config.showWarning())
-        {
-            String messageText = "Many users have been reporting an issue with the groups feature of the Cox Light " +
-                    "Colors plugin. The most recent update should address this issue for most users. The feature has been " +
-                    "marked as 'experimental' in the meantime. This warning can be disabled in the plugins settings.";
-
-            final ChatMessageBuilder message = new ChatMessageBuilder()
-                    .append(ChatColorType.HIGHLIGHT)
-                    .append("Ankou:")
-                    .append(ChatColorType.NORMAL)
-                    .append(messageText);
-
-            chatMessageManager.queue(QueuedMessage.builder()
-                    .type(ChatMessageType.ITEM_EXAMINE)
-                    .runeLiteFormattedMessage(message.build())
-                    .build());
         }
     }
 
@@ -299,11 +297,11 @@ public class CoxLightColorsPlugin extends Plugin
         switch (group)
         {
             case ONE:
-                return config.groupOneColor();
+                return (config.enableGroupOne() ? config.groupOneColor() : getNewLightColor());
             case TWO:
-                return config.groupTwoColor();
+                return (config.enableGroupTwo() ? config.groupTwoColor() : getNewLightColor());
             case THREE:
-                return config.groupThreeColor();
+                return (config.enableGroupThree() ? config.groupThreeColor() : getNewLightColor());
             default:
                 return getNewLightColor();
         }

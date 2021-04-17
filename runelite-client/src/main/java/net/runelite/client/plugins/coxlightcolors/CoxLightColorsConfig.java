@@ -34,17 +34,6 @@ import java.awt.*;
 @ConfigGroup("coxlightcolors")
 public interface CoxLightColorsConfig extends Config
 {
-    @ConfigItem(
-            keyName = "showWarning",
-            name = "Show warning on login",
-            description = "Whether or not to show the warning for experimental features on login.",
-            position = 1
-    )
-    default boolean showWarning()
-    {
-        return true;
-    }
-
     @ConfigSection(
             name = "Light colors",
             description = "Colors of the lights above the loot chest for different scenarios",
@@ -191,6 +180,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupOneColor",
             name = "Group 1",
             description = "Color of the light when an item from group 1 is obtained",
+            position = 0,
             section = uniquesSection
     )
     default Color groupOneColor()
@@ -202,6 +192,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupTwoColor",
             name = "Group 2",
             description = "Color of the light when an item from group 2 is obtained",
+            position = 1,
             section = uniquesSection
     )
     default Color groupTwoColor()
@@ -213,6 +204,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupThreeColor",
             name = "Group 3",
             description = "Color of the light when an item from group 3 is obtained",
+            position = 2,
             section = uniquesSection
     )
     default Color groupThreeColor()
@@ -224,6 +216,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupTwistedBow",
             name = "Twisted bow",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 3,
             section = uniquesSection
     )
     default ItemGroup groupTwistedBow()
@@ -235,6 +228,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupKodai",
             name = "Kodai insignia",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 4,
             section = uniquesSection
     )
     default ItemGroup groupKodai()
@@ -246,6 +240,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupElderMaul",
             name = "Elder maul",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 5,
             section = uniquesSection
     )
     default ItemGroup groupElderMaul()
@@ -257,6 +252,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupClaws",
             name = "Dragon claws",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 6,
             section = uniquesSection
     )
     default ItemGroup groupClaws()
@@ -268,6 +264,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupAncestralHat",
             name = "Ancestral hat",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 7,
             section = uniquesSection
     )
     default ItemGroup groupAncestralHat()
@@ -279,6 +276,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupAncestralTop",
             name = "Ancestral robe top",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 8,
             section = uniquesSection
     )
     default ItemGroup groupAncestralTop()
@@ -290,6 +288,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupAncestralBottom",
             name = "Ancestral robe bottom",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 9,
             section = uniquesSection
     )
     default ItemGroup groupAncestralBottom()
@@ -301,6 +300,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupDinhs",
             name = "Dinh's bulwark",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 10,
             section = uniquesSection
     )
     default ItemGroup groupDinhs()
@@ -312,6 +312,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupDHCB",
             name = "Dragon hunter crossbow",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 11,
             section = uniquesSection
     )
     default ItemGroup groupDHCB()
@@ -323,6 +324,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupBuckler",
             name = "Twisted buckler",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 12,
             section = uniquesSection
     )
     default ItemGroup groupBuckler()
@@ -334,6 +336,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupArcane",
             name = "Arcane prayer scroll",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 13,
             section = uniquesSection
     )
     default ItemGroup groupArcane()
@@ -345,6 +348,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupDex",
             name = "Dexterous prayer scroll",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
+            position = 14,
             section = uniquesSection
     )
     default ItemGroup groupDex()
@@ -352,5 +356,40 @@ public interface CoxLightColorsConfig extends Config
         return ItemGroup.NONE;
     }
 
+    @ConfigItem(
+            keyName = "enableGroupOne",
+            name = "Recolor group 1",
+            description = "Enable recoloring the light of the chest when a unique from group 1 is obtained",
+            position = 15,
+            section = uniquesSection
+    )
+    default boolean enableGroupOne()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "enableGroupTwo",
+            name = "Recolor group 2",
+            description = "Enable recoloring the light of the chest when a unique from group 2 is obtained",
+            position = 16,
+            section = uniquesSection
+    )
+    default boolean enableGroupTwo()
+    {
+        return true;
+    }
+
+    @ConfigItem(
+            keyName = "enableGroupThree",
+            name = "Recolor group 3",
+            description = "Enable recoloring the light of the chest when a unique from group 3 is obtained",
+            position = 17,
+            section = uniquesSection
+    )
+    default boolean enableGroupThree()
+    {
+        return true;
+    }
 }
 
