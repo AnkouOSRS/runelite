@@ -117,7 +117,8 @@ public class CoxLightColorsPlugin extends Plugin
     }
 
     @Subscribe
-    public void onChatMessage(ChatMessage chatMessage) {
+    public void onChatMessage(ChatMessage chatMessage)
+    {
         if (client.getLocalPlayer() == null)
             return;
 
@@ -152,11 +153,14 @@ public class CoxLightColorsPlugin extends Plugin
                                     "based on unique group: {}", String.format("#%06x", newLightColor.getRGB() & 0x00FFFFFF));
                             recolorAllFaces(lightObject.getRenderable().getModel(),
                                     newLightColor, true);
-
-                        } else {
+                        }
+                        else
+                        {
                             log.error("Light object null after local player received drop");
                         }
-                    } else {
+                    }
+                    else
+                    {
                         log.debug("Drop received by non-local player: {}, player: {}", dropName, dropReceiver);
                     }
                 }
@@ -216,7 +220,8 @@ public class CoxLightColorsPlugin extends Plugin
         }
     }
 
-    private void updateLightColor() {
+    private void updateLightColor()
+    {
         if (lightObject != null)
         {
             currentLightType = client.getVarbitValue(VARBIT_LIGHT_TYPE);
@@ -272,7 +277,8 @@ public class CoxLightColorsPlugin extends Plugin
         }
     }
 
-    private Color getGroupColor(ItemGroup group) {
+    private Color getGroupColor(ItemGroup group)
+    {
         switch (group)
         {
             case ONE:
@@ -286,10 +292,12 @@ public class CoxLightColorsPlugin extends Plugin
         }
     }
 
-    private Color getNewLightColor() {
+    private Color getNewLightColor()
+    {
         if (currentLightType == null)
             return null;
-        switch (currentLightType) {
+        switch (currentLightType)
+        {
             case 1:
                 return (config.enableStandardLoot() ? config.standardLoot() : null);
             case 2:
@@ -305,7 +313,8 @@ public class CoxLightColorsPlugin extends Plugin
 
     private void recolorAllFaces(Model model, Color color, boolean isLight)
     {
-        if (model == null || color == null) {
+        if (model == null || color == null)
+        {
             return;
         }
 
@@ -326,7 +335,8 @@ public class CoxLightColorsPlugin extends Plugin
             defaultEntranceFaceColors2 = faceColors2.clone();
             defaultEntranceFaceColors3 = faceColors3.clone();
         }
-        if (isLight && !StringUtils.isBlank(uniqueItemReceived) && color != getUniqueGroupColor(uniqueItemReceived)) {
+        if (isLight && !StringUtils.isBlank(uniqueItemReceived) && color != getUniqueGroupColor(uniqueItemReceived))
+        {
             color = getUniqueGroupColor(uniqueItemReceived);
         }
         log.debug("Calling replaceFaceColorValues with color: {}, on {}", String.format("#%06x", color.getRGB() & 0x00FFFFFF),
@@ -334,7 +344,8 @@ public class CoxLightColorsPlugin extends Plugin
         replaceFaceColorValues(faceColors1, faceColors2, faceColors3, rs2hsb);
     }
 
-    private boolean isInRaid() {
+    private boolean isInRaid()
+    {
         return (client.getGameState() == GameState.LOGGED_IN && client.getVar(Varbits.IN_RAID) == 1);
     }
 
@@ -352,7 +363,8 @@ public class CoxLightColorsPlugin extends Plugin
         return (encode_hue << 10) + (encode_saturation << 7) + (encode_brightness);
     }
 
-    private void resetFaceColors() {
+    private void resetFaceColors()
+    {
         if (lightObject != null && lightObject.getRenderable().getModel() != null && defaultLightFaceColors1 != null && defaultLightFaceColors2 != null && defaultLightFaceColors3 != null)
         {
             Model model = lightObject.getRenderable().getModel();
@@ -375,7 +387,8 @@ public class CoxLightColorsPlugin extends Plugin
     }
 
     private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3,
-                                        int[] newFaceColors1, int[] newFaceColors2, int[] newFaceColors3) {
+                                        int[] newFaceColors1, int[] newFaceColors2, int[] newFaceColors3)
+    {
         if (faceColors1.length == newFaceColors1.length && faceColors2.length == newFaceColors2.length
                 && faceColors3.length == newFaceColors3.length)
         {
@@ -385,7 +398,8 @@ public class CoxLightColorsPlugin extends Plugin
         }
     }
 
-    private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3, int globalReplacement) {
+    private void replaceFaceColorValues(int[] faceColors1, int[] faceColors2, int[] faceColors3, int globalReplacement)
+    {
         if (faceColors1.length > 0)
         {
             for (int i = 0; i < faceColors1.length; i++)
