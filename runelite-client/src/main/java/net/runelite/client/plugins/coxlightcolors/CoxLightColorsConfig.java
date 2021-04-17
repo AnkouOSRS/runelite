@@ -34,6 +34,17 @@ import java.awt.*;
 @ConfigGroup("coxlightcolors")
 public interface CoxLightColorsConfig extends Config
 {
+    @ConfigItem(
+            keyName = "showWarning",
+            name = "Show warning on login",
+            description = "Whether or not to show the warning for experimental features on login.",
+            position = 1
+    )
+    default boolean showWarning()
+    {
+        return true;
+    }
+
     @ConfigSection(
             name = "Light colors",
             description = "Colors of the lights above the loot chest for different scenarios",
@@ -42,7 +53,7 @@ public interface CoxLightColorsConfig extends Config
     String colorsSection = "colors";
 
     @ConfigSection(
-            name = "Item groups",
+            name = "Groups (Experimental)",
             description = "Uniques that, when obtained, will use the 'Specific Unique' color for the light",
             position = 1
     )
@@ -180,8 +191,7 @@ public interface CoxLightColorsConfig extends Config
             keyName = "groupOneColor",
             name = "Group 1",
             description = "Color of the light when an item from group 1 is obtained",
-            position = 10,
-            section = colorsSection
+            section = uniquesSection
     )
     default Color groupOneColor()
     {
@@ -189,23 +199,10 @@ public interface CoxLightColorsConfig extends Config
     }
 
     @ConfigItem(
-            keyName = "enableGroupOne",
-            name = "Recolor group 1",
-            description = "Enable recoloring the light of the chest when a unique from group 1 is obtained",
-            position = 11,
-            section = togglesSection
-    )
-    default boolean enableGroupOne()
-    {
-        return true;
-    }
-
-    @ConfigItem(
             keyName = "groupTwoColor",
             name = "Group 2",
             description = "Color of the light when an item from group 2 is obtained",
-            position = 12,
-            section = colorsSection
+            section = uniquesSection
     )
     default Color groupTwoColor()
     {
@@ -213,23 +210,10 @@ public interface CoxLightColorsConfig extends Config
     }
 
     @ConfigItem(
-            keyName = "enableGroupTwo",
-            name = "Recolor group 2",
-            description = "Enable recoloring the light of the chest when a unique from group 2 is obtained",
-            position = 13,
-            section = togglesSection
-    )
-    default boolean enableGroupTwo()
-    {
-        return true;
-    }
-
-    @ConfigItem(
             keyName = "groupThreeColor",
             name = "Group 3",
             description = "Color of the light when an item from group 3 is obtained",
-            position = 14,
-            section = colorsSection
+            section = uniquesSection
     )
     default Color groupThreeColor()
     {
@@ -237,22 +221,9 @@ public interface CoxLightColorsConfig extends Config
     }
 
     @ConfigItem(
-            keyName = "enableGroupThree",
-            name = "Recolor group 3",
-            description = "Enable recoloring the light of the chest when a unique from group 3 is obtained",
-            position = 15,
-            section = togglesSection
-    )
-    default boolean enableGroupThree()
-    {
-        return true;
-    }
-
-    @ConfigItem(
             keyName = "groupTwistedBow",
             name = "Twisted bow",
             description = "Group color to use when this item is obtained. If no group is specified, the 'unique' color will be used",
-            position = 16,
             section = uniquesSection
     )
     default ItemGroup groupTwistedBow()
