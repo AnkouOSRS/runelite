@@ -40,13 +40,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import java.awt.*;
-import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static net.runelite.api.ChatMessageType.FRIENDSCHATNOTIFICATION;
-import static net.runelite.api.ChatMessageType.GAMEMESSAGE;
 
 @PluginDescriptor(
         name = "CoX Light Colors",
